@@ -84,45 +84,17 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    # print "Start:", problem.getStartState()
-    # print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    # print "Start's successors:", problem.getSuccessors(problem.getStartState())
-
-    # frontier = util.Stack() # initialize the stack
-    # rootNode = problem.getStartState()
-    # explored = set();
-    # currentDirections = []
-    # currentCost = 0
-    # frontier.push([rootNode]) # push current state onto the stack as well as empty direction list, and 0 cost
-    # while not frontier.isEmpty(): # while frontier is not empty
-    #     rootNode = frontier.pop() # pop current state off stack and examine
-    #     print "POPPING OFF STACK:", rootNode
-        
-    #     if (rootNode[-1] not in explored):
-    #        explored.add(rootNode[-1]);
-
-    #     #print "IS THIS THE GOAL STATE?", problem.isGoalState(rootNode[0])
-    #     if problem.isGoalState(rootNode):
-    #         return currentDirections;
-
-    #     for state, direction, cost in problem.getSuccessor(rootNode):
-    #         currentDirections += direction
-    #         currentCost = cost
-    #         FIFO_Queue.push(state)
-
-    # return [];
-
     fifo_queue = util.Stack(); # initialize the stack
-    expanded = set();
+    explored = set();
     fifo_queue.push((problem.getStartState(),[],0));# push current state onto the stack as well as empty direction list, and 0 cost
 
     while not fifo_queue.isEmpty(): # while queue is not empty
         curState, curMoves, curCost = fifo_queue.pop(); # pop off the stuff off the stack
 
-        if(curState in expanded):
+        if(curState in explored):
             continue;
 
-        expanded.add(curState);
+        explored.add(curState);
 
         if problem.isGoalState(curState):
             return curMoves;
@@ -137,29 +109,47 @@ def breadthFirstSearch(problem):
     Search the shallowest nodes in the search tree first.
     """
     "*** YOUR CODE HERE ***"
-    fifo_queue = util.Queue(); # initialize the stack
-    expanded = set();
-    fifo_queue.push((problem.getStartState(),[],0));# push current state onto the stack as well as empty direction list, and 0 cost
+    fifo_queue = util.Queue(); # initialize the queue
+    explored = set();
+    fifo_queue.push((problem.getStartState(),[],0));# init: push current state onto the stack as well as empty direction list, and 0 cost
 
     while not fifo_queue.isEmpty(): # while queue is not empty
         curState, curMoves, curCost = fifo_queue.pop(); # pop off the stuff off the stack
 
-        if(curState in expanded):
+        if(curState in explored): # if current state in explored then continue
             continue;
 
-        expanded.add(curState);
+        explored.add(curState); # if not, add it to explored
 
-        if problem.isGoalState(curState):
+        if problem.isGoalState(curState): # if goal state, return move list
             return curMoves;
 
-        for state, direction, cost in problem.getSuccessors(curState):
+        for state, direction, cost in problem.getSuccessors(curState): # else get successors and push them on the stack
             fifo_queue.push((state, curMoves+[direction], curCost));
-    return [];
+    return []; # if nothing found, return null list
 
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    priorityQueue = util.PriorityQueue(); # initialize the priority queue
+    explored = set();
+    priorityQueue.push((problem.getStartState(),[],0), 0);# init: push current state onto the stack as well as empty direction list, and 0 cost
+
+    while not priorityQueue.isEmpty(): # while queue is not empty
+        curState, curMoves, curCost = priorityQueue.pop(); # pop off the stuff off the stack
+
+        if(curState in explored): # if current state in explored then continue
+            continue;
+
+        explored.add(curState); # if not, add it to explored
+
+        if problem.isGoalState(curState): # if goal state, return move list
+            return curMoves;
+
+        for state, direction, cost in problem.getSuccessors(curState): # else get successors and push them on the stack
+            newMoves = curMoves + [direction]
+            priorityQueue.push((state, curMoves+[direction], curCost), problem.getCostOfActions(newMoves)); # push onto priority queue with new move cost (current moves + direction you are going)
+    return []; # if nothing found, return null list
 
 def nullHeuristic(state, problem=None):
     """
@@ -171,7 +161,26 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     "Search the node that has the lowest combined cost and heuristic first."
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    priorityQueue = util.PriorityQueue(); # initialize the priority queue
+    explored = set();
+    priorityQueue.push((problem.getStartState(),[],0), 0);# init: push current state onto the stack as well as empty direction list, and 0 cost
+
+    while not priorityQueue.isEmpty(): # while queue is not empty
+        curState, curMoves, curCost = priorityQueue.pop(); # pop off the stuff off the stack
+
+        if(curState in explored): # if current state in explored then continue
+            continue;
+
+        explored.add(curState); # if not, add it to explored
+
+        if problem.isGoalState(curState): # if goal state, return move list
+            return curMoves;
+
+        for state, direction, cost in problem.getSuccessors(curState): # else get successors and push them on the stack
+            newMoves = curMoves + [direction]
+            costWithHeuristic = problem.getCostOfActions(newMoves) + heuristic(state, problem)
+            priorityQueue.push((state, curMoves+[direction], curCost), costWithHeuristic); # push onto priority queue with new move cost (things on frontier + heuristic)
+    return []; # if nothing found, return null list
 
 
 # Abbreviations
