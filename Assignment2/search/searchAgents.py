@@ -280,16 +280,18 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        self.startState = (self.startingPosition, self.corners)
 
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.startState 
 
     def isGoalState(self, state):
         "Returns whether this search state is a goal state of the problem"
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        position, corners = state
+        return len(corners) == 0
 
     def getSuccessors(self, state):
         """
@@ -311,8 +313,20 @@ class CornersProblem(search.SearchProblem):
             #   dx, dy = Actions.directionToVector(action)
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
-
             "*** YOUR CODE HERE ***"
+            # state[0] is the location of the current node
+            # state[1] is a tuple location of the corners that have not been visited
+            x,y = state[0]
+            dx,dy = Actions.directionToVector(action)
+            nextx, nexty = int(x +dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                position, corners = state
+                cornersList = list(corners)
+                if (nextx, nexty) in cornersList:
+                    cornersList.remove((nextx,nexty))
+                newPosition = (nextx, nexty)
+                newCorners = tuple(cornersList)
+                successors.append(((newPosition, newCorners), action, 1))
 
         self._expanded += 1
         return successors
@@ -344,10 +358,55 @@ def cornersHeuristic(state, problem):
     on the shortest path from the state to a goal of the problem; i.e.
     it should be admissible (as well as consistent).
     """
-    corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    distance = 0
+    corners_list = list(state[1])
+    xy1 = state[0]
+    temp = 0
+    closest =0
+    distance_list = []
+    min_index = 0
+    farthest = 0
+    distance_to_closest_corner = 0
+    closest = 0
 
-    "*** YOUR CODE HERE ***"
+    # if no corners left - we are done
+    if len(corners_list) == 0:
+      None
+    elif len(corners_list) > 0:
+      # Step 1: If there is at least one corner left, find distance to that corner
+      for i in range(len(corners_list)):
+          xy2 = corners_list[i]
+          # put all distances into a list
+          distance_list.append(abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1]))
+      distance_to_closest_corner = min(distance_list)      
+      min_index = distance_list.index(distance_to_closest_corner)
+      closest_corner = corners_list[min_index]
+      
+      # If using only distance to the closest corner as the heuristics,
+      # Search nodes expanded on mediumCorners is 1555.
+      total = 0
+      # Step 2: if there are more than 1 corner left
+      # find the shortest distance from the closest corner
+      # to the other corner that is closest to the closest corner
+      corners_list.remove(closest_corner)
+      while len(corners_list) > 0:
+          distance_list = []
+          xy1 = closest_corner
+          for i in range(len(corners_list)):
+              xy2 = corners_list[i]
+              # put all distances into a list
+              distance_list.append(abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1]))
+          closest = min(distance_list)
+          min_index = distance_list.index(closest)
+          closest_corner = corners_list[min_index]
+          corners_list.remove(closest_corner)
+          
+          total = total + closest
+          
+      # distance = distance to closest + distance to the closest of the closest    
+      distance = distance_to_closest_corner + total
+      
+    return distance
     return 0 # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):
@@ -439,7 +498,44 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    def getMinimumWallsCrossed(position, dot, wallGrid):
+        wallsFromPos = 0
+        wallsFromDot = 0
+
+        x1 = min(position[0], dot[0])
+        x2 = max(position[0], dot[0]) + 1 # we need to move, otherwise we would already have eaten the dot
+
+        y1 = min(position[1], dot[1])
+        y2 = max(position[1], dot[1]) + 1 # same as for sweeping in the horizontal direction to detect vertical walls
+
+        sweepx = range(x1, x2)
+        sweepy = range(y1, y2)
+
+        for xpos in sweepx:
+          if wallGrid[xpos][dot[1]]:
+            wallsFromDot += 1 # we cannot assume the wall is any longer than 1 here
+          if wallGrid[xpos][position[1]]:
+            wallsFromPos += 1 # if we chose to move directly towards the dot along this axis first
+
+        for ypos in sweepy:
+          if wallGrid[dot[0]][ypos]:
+            wallsFromDot += 1 # we cannot assume the wall is any longer than 1 here
+          if wallGrid[position[0]][ypos]:
+            wallsFromPos += 1
+
+        return min(wallsFromPos, wallsFromDot) # we always have the choice of moving over and up, or up and over, etc.
+
+    value = 0
+
+    walls = problem.walls
+    allDots = foodGrid.asList()
+
+    for dot in allDots:
+        directDistance = util.manhattanDistance(position, dot) + getMinimumWallsCrossed(position, dot, walls)
+        # ensure thatwe don't overestimate the distance by taking a round-about path
+        if directDistance > value:
+          value = directDistance
+    return value
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -467,7 +563,7 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return search.aStarSearch(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -503,7 +599,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return state in self.food.asList()
 
 ##################
 # Mini-contest 1 #

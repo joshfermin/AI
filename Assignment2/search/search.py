@@ -84,12 +84,12 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    fifo_queue = util.Stack(); # initialize the stack
+    lifo_queue = util.Stack(); # initialize the stack
     explored = set();
-    fifo_queue.push((problem.getStartState(),[],0));# push current state onto the stack as well as empty direction list, and 0 cost
+    lifo_queue.push((problem.getStartState(),[],0));# push current state onto the stack as well as empty direction list, and 0 cost
 
-    while not fifo_queue.isEmpty(): # while queue is not empty
-        curState, curMoves, curCost = fifo_queue.pop(); # pop off the stuff off the stack
+    while not lifo_queue.isEmpty(): # while queue is not empty
+        curState, curMoves, curCost = lifo_queue.pop(); # pop off the stuff off the stack
 
         if(curState in explored):
             continue;
@@ -100,7 +100,7 @@ def depthFirstSearch(problem):
             return curMoves;
 
         for state, direction, cost in problem.getSuccessors(curState):
-            fifo_queue.push((state, curMoves+[direction], curCost));
+            lifo_queue.push((state, curMoves+[direction], curCost));
     return [];
 
 
