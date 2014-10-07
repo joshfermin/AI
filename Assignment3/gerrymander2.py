@@ -81,30 +81,7 @@ def getAllMoves(matrix, lengthOfChoice):
 		# bottom right square
 		choices.append([matrix[-1][-1], matrix[-2][-1], matrix[-1][-2], matrix[-2][-2]])
 	return choices
-	# size = lengthOfChoice
-	# for choice in choices:
-	# 	d = 0 
-	# 	r = 0
-	# 	for i in choice:
-	# 		if i == "D":
-	# 			d = d + 1
-	# 		if i == "R":
-	# 			r = r + 1
-	# 	if r == size:
-	# 		score = 2
-	# 	elif r > (size / 2):
-	# 		score = 1
-	# 	elif r == d:
-	# 		score =0
-	# 	elif d > (size / 2):
-	# 		score = -1
-	# 	elif d == size:
-	# 		score = -2
-	# 	scorearray.append(score)
-	# bestmove_scorearray = np.asarray(scorearray)
-	# bestmoveindex = bestmove_scorearray.argmax(axis=0)
-	# bestmove = choices[bestmoveindex]
-	# return bestmove
+	
 def firstMove(choices, lengthOfChoice):
 	scorearray = []
 	score = 0
