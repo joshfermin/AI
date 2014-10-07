@@ -61,10 +61,8 @@ def main():
 	allMoves = getAllMoves(neighborhoodMatrix, totalDistricts)
 	allMoves = np.asarray(allMoves)
 	init_move = firstMove(allMoves, totalDistricts)
-	print len(allMoves)
 	allMoves = np.delete(allMoves, init_move[0], axis=0)
 	init_move = init_move[1]
-	print allMoves
 	print "Total Neighborhoods: " + str(totalNeighborhoods) + "\n" + "Total Districts should be: " + str(totalDistricts)
 	i_depth = 4 # depth of tree you want to calculate
 	i_curPlayer = "MAX" # max will start
