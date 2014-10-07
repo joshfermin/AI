@@ -1,21 +1,22 @@
 from sys import maxsize
 import itertools
 import sys
-import numpy as np
+import numpy as np # for numpy array
 
 class Node:
-	def __init__(self, i_depth, i_player, i_choice, i_value = 0):
+	def __init__(self, i_depth, i_player, i_move, i_movesRemaining, i_value = 0):
 		self.i_depth = i_depth
 		self.i_player = i_player # true player (MAX), false player (MIN)
 		self.i_value = i_value
-		self.i_choice = i_choice
+		self.i_move = i_move
+		self.i_movesRemaining = i_movesRemaining
 		self.children = []
 		self.CreateChildren()
 
 
 	def CreateChildren(self):
 		# if self.i_depth >= 0: # how far down the tree you want to calculate
-		# 	if self.i_choice = 
+		# 	if self.i_move = 
 		# 	self.children.append(Node(self.i_depth))
 		pass
 
@@ -58,19 +59,25 @@ def main():
 	totalNeighborhoods = len(list(itertools.chain(*neighborhoodMatrix))) # get number of choices
 	totalDistricts = len(neighborhoodMatrix)
 	allMoves = getAllMoves(neighborhoodMatrix, totalDistricts)
+	allMoves = np.asarray(allMoves)
 	init_move = firstMove(allMoves, totalDistricts)
-	print init_move
+	print len(allMoves)
+	allMoves = np.delete(allMoves, init_move[0], axis=0)
+	init_move = init_move[1]
+	print allMoves
 	print "Total Neighborhoods: " + str(totalNeighborhoods) + "\n" + "Total Districts should be: " + str(totalDistricts)
 	i_depth = 4 # depth of tree you want to calculate
-	i_curPlayer = 1 # max will start
-	max_root_node = Node(i_depth, i_curPlayer, init_move)
+	i_curPlayer = "MAX" # max will start
+	max_init_node = Node(i_depth, i_curPlayer, init_move, allMoves)
 	print "*"*30 + "\n MAX = R \n MIN = D \n" + "*"*30
 
 def getAllMoves(matrix, lengthOfChoice):
 	choices = []
 	for i in range(len(matrix)): # add all columns/row choices
-		choices.append(matrix[:,i]) # column
-		choices.append(matrix[i,:]) # row
+		column = matrix[:,i].tolist()
+		row = matrix[i,:].tolist()
+		choices.append(column) # column
+		choices.append(row) # row
 	if lengthOfChoice == 4: # for small matrix
 		# upper left square
 		choices.append([matrix[0][0], matrix[0][1], matrix[1][0], matrix[1][1]]) 
@@ -81,9 +88,10 @@ def getAllMoves(matrix, lengthOfChoice):
 		# bottom right square
 		choices.append([matrix[-1][-1], matrix[-2][-1], matrix[-1][-2], matrix[-2][-2]])
 	return choices
-	
+
 def firstMove(choices, lengthOfChoice):
 	scorearray = []
+	returnarray = []
 	score = 0
 	size = lengthOfChoice
 	for choice in choices:
@@ -108,7 +116,9 @@ def firstMove(choices, lengthOfChoice):
 	bestmove_scorearray = np.asarray(scorearray)
 	bestmoveindex = bestmove_scorearray.argmax(axis=0)
 	bestmove = choices[bestmoveindex]
-	return bestmove
+	returnarray.append(bestmoveindex)
+	returnarray.append(bestmove)
+	return returnarray
 
 def convertToNeighborhoodMatrix(inputtxt):
 	Neighborhood = open(inputtxt, 'r')
