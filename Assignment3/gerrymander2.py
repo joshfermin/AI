@@ -25,63 +25,32 @@ class Node:
 		for key in self.i_move:
 			moveKey = (key[0], None)
 		if self.i_depth >= 0: # how far down the tree you want to calculate
-			# if bottom right box, cant choose (remove) last few rows, and right columns 
+		# DELETING INVALID MOVES
 			if moveKey == ('BOT RIGHT', None):
 				self.DeleteRightCol()
-				self.DeleteBotRow()
+				self.DeleteBotRows()
 			if moveKey == ('BOT LEFT', None):
-				for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
-					deleteKey = list(self.PartialMatch(('BOT ROW ' + str(i), None), self.i_movesRemaining))
-					deleteKey = tuple(itertools.chain(*deleteKey))
-					del self.i_movesRemaining[tuple(deleteKey)]
-
-					deleteKey = list(self.PartialMatch(('RIGHT COL ' + str(i), None), self.i_movesRemaining))
-					deleteKey = tuple(itertools.chain(*deleteKey))
+				self.DeleteLeftCol()
+				self.DeleteBotRow(s)
 			if moveKey == ('TOP RIGHT', None):
-				for i in range(0, (lengthOfChoice / 2)):
-					deleteKey = list(self.PartialMatch(('TOP ROW ' + str(i), None), self.i_movesRemaining))
-					deleteKey = tuple(itertools.chain(*deleteKey))
-					del self.i_movesRemaining[tuple(deleteKey)]
-				for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
-					deleteKey = list(self.PartialMatch(('RIGHT COL ' + str(i), None), self.i_movesRemaining))
-					deleteKey = tuple(itertools.chain(*deleteKey))
-					del self.i_movesRemaining[tuple(deleteKey)]
+				self.DeleteRightCol()
+				self.DeleteTopRows()
 			if moveKey == ('TOP LEFT', None):
-				for i in range(0, (lengthOfChoice / 2)):
-					deleteKey = list(self.PartialMatch(('TOP ROW ' + str(i), None), self.i_movesRemaining))
-					deleteKey = tuple(itertools.chain(*deleteKey))
-					del self.i_movesRemaining[tuple(deleteKey)]
-				for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
-					deleteKey = list(self.PartialMatch(('RIGHT COL ' + str(i), None), self.i_movesRemaining))
-					deleteKey = tuple(itertools.chain(*deleteKey))
-					del self.i_movesRemaining[tuple(deleteKey)]
+				self.DeleteLeftCol()
+				self.DeleteTopRows()
+			for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
+				if moveKey == ('TOP ROW ' + str(i), None):
+					self.DeleteSpecificDistrict('TOP ROW ' + str(i))
+				if moveKey == ('LEFT COL ' + str(i), None)
+					self.DeleteSpecificDistrict('LEFT COL ' + str(i))
+			for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
+				if moveKey == ('BOT ROW ' + str(i), None):
+					self.DeleteSpecificDistrict('BOT ROW ' + str(i))
+				if moveKey == ('RIGHT COL ' + str(i), None):
+					self.DeleteSpecificDistrict('RIGHT COL ' + str(i))
 			print self.i_movesRemaining
 			print "\n"
 			# self.children.append(Node(self.i_depth))
-
-	def DeleteBotRow(self):
-		for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
-			deleteKey = list(self.PartialMatch(('BOT ROW ' + str(i), None), self.i_movesRemaining))
-			deleteKey = tuple(itertools.chain(*deleteKey))
-			del self.i_movesRemaining[tuple(deleteKey)]
-
-	def DeleteTopRow(self):
-		for i in range(0, (lengthOfChoice / 2)):
-			deleteKey = list(self.PartialMatch(('TOP ROW ' + str(i), None), self.i_movesRemaining))
-			deleteKey = tuple(itertools.chain(*deleteKey))
-			del self.i_movesRemaining[tuple(deleteKey)]
-
-	def DeleteLeftCol(self):
-		for i in range(0, (lengthOfChoice / 2)):
-			deleteKey = list(self.PartialMatch(('LEFT COL ' + str(i), None), self.i_movesRemaining))
-			deleteKey = tuple(itertools.chain(*deleteKey))
-			del self.i_movesRemaining[tuple(deleteKey)]
-
-	def DeleteRightCol(self):
-		for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
-			deleteKey = list(self.PartialMatch(('RIGHT COL ' + str(i), None), self.i_movesRemaining))
-			deleteKey = tuple(itertools.chain(*deleteKey))
-			del self.i_movesRemaining[tuple(deleteKey)]
 
 	def Score(self, choice, player):
 		d = 0
@@ -93,7 +62,7 @@ class Node:
 				r = r - 1
 		size = len(choice)
 
-		if player == "MAX":
+		if player == 1:
 			if r == size:
 				score = 2
 			elif r > (size / 2):
@@ -122,6 +91,55 @@ class Node:
 	        if all(k1 == k2 or k2 is None  for k1, k2 in zip(k, key)):
 	        	yield k
 
+	def DeleteSpecificDistrict(self, key):
+		deleteKey = list(self.PartialMatch((key, None), self.i_movesRemaining))
+		deleteKey = tuple(itertools.chain(*deleteKey))
+		del self.i_movesRemaining[deleteKey]
+
+	def DeleteBotRows(self):
+		for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
+			deleteKey = list(self.PartialMatch(('BOT ROW ' + str(i), None), self.i_movesRemaining))
+			deleteKey = tuple(itertools.chain(*deleteKey))
+			del self.i_movesRemaining[deleteKey]
+
+	def DeleteTopRows(self):
+		for i in range(0, (lengthOfChoice / 2)):
+			deleteKey = list(self.PartialMatch(('TOP ROW ' + str(i), None), self.i_movesRemaining))
+			deleteKey = tuple(itertools.chain(*deleteKey))
+			del self.i_movesRemaining[deleteKey]
+
+	def DeleteLeftCol(self):
+		for i in range(0, (lengthOfChoice / 2)):
+			deleteKey = list(self.PartialMatch(('LEFT COL ' + str(i), None), self.i_movesRemaining))
+			deleteKey = tuple(itertools.chain(*deleteKey))
+			del self.i_movesRemaining[deleteKey]
+
+	def DeleteRightCol(self):
+		for i in range((self.i_totalDistrict / 2), self.i_totalDistrict):
+			deleteKey = list(self.PartialMatch(('RIGHT COL ' + str(i), None), self.i_movesRemaining))
+			deleteKey = tuple(itertools.chain(*deleteKey))
+			del self.i_movesRemaining[deleteKey]
+
+	def DeleteTopLeft(self):
+		deleteKey = list(self.PartialMatch(('TOP LEFT'), None), self.i_movesRemaining)
+		deleteKey = tuple(itertools.chain(*deleteKey))
+		del self.i_movesRemaining[deleteKey]
+
+	def DeleteTopRight(self):
+		deleteKey = list(self.PartialMatch(('TOP RIGHT'), None), self.i_movesRemaining)
+		deleteKey = tuple(itertools.chain(*deleteKey))
+		del self.i_movesRemaining[deleteKey]
+
+	def DeleteBotLeft(self):
+		deleteKey = list(self.PartialMatch(('BOT LEFT'), None), self.i_movesRemaining)
+		deleteKey = tuple(itertools.chain(*deleteKey))
+		del self.i_movesRemaining[deleteKey]
+
+	def DeleteBotRight(self):
+		deleteKey = list(self.PartialMatch(('BOT RIGHT'), None), self.i_movesRemaining)
+		deleteKey = tuple(itertools.chain(*deleteKey))
+		del self.i_movesRemaining[deleteKey]
+
 def main():
 	neighborhoodMatrix = convertToNeighborhoodMatrix(sys.argv[1])
 	neighborhoodMatrix = np.asarray(neighborhoodMatrix)
@@ -137,7 +155,7 @@ def main():
 	i_movesRemaining = init_move[1]
 	print "Total Neighborhoods: " + str(totalNeighborhoods) + "\n" + "Total Districts should be: " + str(totalDistricts)
 	i_depth = 4 # depth of tree you want to calculate
-	i_curPlayer = "MAX" # max will start
+	i_curPlayer = 1 # max will start
 	for key in i_move:
 		i_value = key[1]
 	max_init_node = Node(i_depth, i_curPlayer, i_move, i_movesRemaining, totalDistricts, i_value)
