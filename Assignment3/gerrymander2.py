@@ -61,10 +61,11 @@ def main():
 	totalDistricts = len(neighborhoodMatrix)
 	allMoves = getAllMoves(neighborhoodMatrix, totalDistricts)
 	moveDictionary = allMoves[1] # dictionary with moves (top row/ bot row, left col/ right col)
-	print moveDictionary["TOP ROW"]
+	print moveDictionary
 	allMoves = allMoves[0] 
 	allMoves = np.asarray(allMoves)
 	init_move = firstMove(allMoves, totalDistricts)
+	# print init_move[0]
 	allMoves = np.delete(allMoves, init_move[0], axis=0)
 	init_move = init_move[1]
 	print "Total Neighborhoods: " + str(totalNeighborhoods) + "\n" + "Total Districts should be: " + str(totalDistricts)
@@ -92,22 +93,23 @@ def getAllMoves(matrix, lengthOfChoice):
 	if lengthOfChoice == 4: # for small matrix [4x4]
 		# upper left square
 		choices.append([matrix[0][0], matrix[0][1], matrix[1][0], matrix[1][1]]) 
+		choiceDictionary["TOP LEFT"] = [matrix[0][0], matrix[0][1], matrix[1][0], matrix[1][1]]
 		# upper right square
 		choices.append([matrix[0][-1], matrix[0][-2], matrix[1][-1], matrix[1][-2]])
+		choiceDictionary["TOP RIGHT"] = [matrix[0][-1], matrix[0][-2], matrix[1][-1], matrix[1][-2]]
 		# bottom left sqare
 		choices.append([matrix[-1][0], matrix[-2][0], matrix[-1][1], matrix[-1][2]])
+		choiceDictionary["BOT LEFT"] = [matrix[-1][0], matrix[-2][0], matrix[-1][1], matrix[-1][2]]
 		# bottom right square
 		choices.append([matrix[-1][-1], matrix[-2][-1], matrix[-1][-2], matrix[-2][-2]])
-		for i in range(0, (lengthOfChoice / 2)):
-			leftcol.append(columnarray[i])
-			toprow.append(rowarray[i])
-			choiceDictionary["LEFT COL"] = leftcol	
-			choiceDictionary["TOP ROW"] = toprow
-		for i in range((lengthOfChoice / 2), lengthOfChoice):
-			rightcol.append(columnarray[i])
-			botrow.append(rowarray[i])
-			choiceDictionary["RIGHT COL"] = rightcol	
-			choiceDictionary["BOT ROW"] = botrow
+		choiceDictionary["BOT RIGHT"] = [matrix[-1][-1], matrix[-2][-1], matrix[-1][-2], matrix[-2][-2]]
+	for i in range(0, (lengthOfChoice / 2)):
+		choiceDictionary["LEFT COL " + str(i)] = columnarray[i]
+		choiceDictionary["TOP ROW " + str(i)] = rowarray[i]
+	for i in range((lengthOfChoice / 2), lengthOfChoice):
+		rightcol.append(columnarray[i])
+		choiceDictionary["RIGHT COL " + str(i)] = columnarray[i]	
+		choiceDictionary["BOT ROW " + str(i)] = rowarray[i]
 	returnarray = []
 	returnarray.append(choices)
 	returnarray.append(choiceDictionary)
