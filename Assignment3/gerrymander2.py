@@ -54,11 +54,15 @@ class Node:
 				score = -2
 
 def main():
+	moveDictionary = dict()
 	neighborhoodMatrix = convertToNeighborhoodMatrix(sys.argv[1])
 	neighborhoodMatrix = np.asarray(neighborhoodMatrix)
 	totalNeighborhoods = len(list(itertools.chain(*neighborhoodMatrix))) # get number of choices
 	totalDistricts = len(neighborhoodMatrix)
 	allMoves = getAllMoves(neighborhoodMatrix, totalDistricts)
+	moveDictionary = allMoves[1] # dictionary with moves (top row/ bot row, left col/ right col)
+	print moveDictionary["TOP ROW"]
+	allMoves = allMoves[0] 
 	allMoves = np.asarray(allMoves)
 	init_move = firstMove(allMoves, totalDistricts)
 	allMoves = np.delete(allMoves, init_move[0], axis=0)
@@ -71,12 +75,21 @@ def main():
 
 def getAllMoves(matrix, lengthOfChoice):
 	choices = []
+	rowarray = []
+	columnarray = []
+	leftcol = []
+	rightcol = []
+	toprow = []
+	botrow = []
+	choiceDictionary = dict()
 	for i in range(len(matrix)): # add all columns/row choices
 		column = matrix[:,i].tolist()
 		row = matrix[i,:].tolist()
 		choices.append(column) # column
 		choices.append(row) # row
-	if lengthOfChoice == 4: # for small matrix
+		columnarray.append(column)
+		rowarray.append(row)
+	if lengthOfChoice == 4: # for small matrix [4x4]
 		# upper left square
 		choices.append([matrix[0][0], matrix[0][1], matrix[1][0], matrix[1][1]]) 
 		# upper right square
@@ -85,7 +98,20 @@ def getAllMoves(matrix, lengthOfChoice):
 		choices.append([matrix[-1][0], matrix[-2][0], matrix[-1][1], matrix[-1][2]])
 		# bottom right square
 		choices.append([matrix[-1][-1], matrix[-2][-1], matrix[-1][-2], matrix[-2][-2]])
-	return choices
+		for i in range(0, (lengthOfChoice / 2)):
+			leftcol.append(columnarray[i])
+			toprow.append(rowarray[i])
+			choiceDictionary["LEFT COL"] = leftcol	
+			choiceDictionary["TOP ROW"] = toprow
+		for i in range((lengthOfChoice / 2), lengthOfChoice):
+			rightcol.append(columnarray[i])
+			botrow.append(rowarray[i])
+			choiceDictionary["RIGHT COL"] = rightcol	
+			choiceDictionary["BOT ROW"] = botrow
+	returnarray = []
+	returnarray.append(choices)
+	returnarray.append(choiceDictionary)
+	return returnarray
 
 def firstMove(choices, lengthOfChoice):
 	scorearray = []
@@ -122,7 +148,6 @@ def convertToNeighborhoodMatrix(inputtxt):
 	Neighborhood = open(inputtxt, 'r')
 	neighborhoodMatrix = map(lambda line: line.rstrip('\n'), Neighborhood)
 	neighborhoodMatrix = [map(str, line.split(' ')) for line in neighborhoodMatrix]
-	#print neighborhoodMatrix
 	return neighborhoodMatrix
 
 def minimaxSearch(node, depth, player):
@@ -135,7 +160,6 @@ def minimaxSearch(node, depth, player):
 			i_val = minimaxSearch(child, i_depth - 1, -1) # drill to bottom of tree, reducing depth, flipping players
 			if(abs(maxsize*i_player - i_val) < abs(maxsize * i_player - bestvalue)): # checking distance from where we want to be to where we are with child, if closer to the goal of +inf or -inf then store vale
 				bestvalue = i_val
-		# print (str(i_depth*i_player) + ") " + " "*i_depth +str(bestvalue)
 		return bestvalue
 	else:
 		bestvalue = maxsize
@@ -144,11 +168,19 @@ def minimaxSearch(node, depth, player):
 			i_val = minimaxSearch(child, i_depth - 1, 1) # drill to bottom of tree, reducing depth, flipping players
 			if(abs(maxsize*i_player - i_val) < abs(maxsize * i_player - bestvalue)): # checking distance from where we want to be to where we are with child, if closer to the goal of +inf or -inf then store vale
 				bestvalue = i_val
-		# print (str(i_depth*i_player) + ") " + " "*i_depth +str(bestvalue)
 		return bestvalue
 
 if __name__ == "__main__":
 	main()
+
+
+
+
+
+
+
+
+
 
 
 
