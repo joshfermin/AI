@@ -8,6 +8,11 @@
 # Abbeel in Spring 2013.
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
 
+# Referenced the following:
+# https://github.com/kalys/edx-ai-project1/blob/master/searchAgents.py
+# http://webcache.googleusercontent.com/search?q=cache:-nwPhJq5OGQJ:workplay.googlecode.com/files/searchAgents.py+&cd=1&hl=en&ct=clnk&gl=us
+# https://github.com/raysaagar/cs182/tree/master/asst1/search
+
 """
 This file contains all of the agents that can be selected to
 control Pacman.  To select an agent, use the '-p' option
@@ -321,11 +326,11 @@ class CornersProblem(search.SearchProblem):
             nextx, nexty = int(x +dx), int(y + dy)
             if not self.walls[nextx][nexty]:
                 position, corners = state
-                cornersList = list(corners)
-                if (nextx, nexty) in cornersList:
-                    cornersList.remove((nextx,nexty))
+                totalCorners = list(corners)
+                if (nextx, nexty) in totalCorners:
+                    totalCorners.remove((nextx,nexty))
                 newPosition = (nextx, nexty)
-                newCorners = tuple(cornersList)
+                newCorners = tuple(totalCorners)
                 successors.append(((newPosition, newCorners), action, 1))
 
         self._expanded += 1
@@ -369,11 +374,11 @@ def cornersHeuristic(state, problem):
     distance_to_closest_corner = 0
     closest = 0
 
-    # if no corners left - we are done
+    # no corners left, return.
     if len(corners_list) == 0:
       None
     elif len(corners_list) > 0:
-      # Step 1: If there is at least one corner left, find distance to that corner
+      # if there are still corners, find the distance to that corner
       for i in range(len(corners_list)):
           xy2 = corners_list[i]
           # put all distances into a list
@@ -381,13 +386,11 @@ def cornersHeuristic(state, problem):
       distance_to_closest_corner = min(distance_list)      
       min_index = distance_list.index(distance_to_closest_corner)
       closest_corner = corners_list[min_index]
-      
-      # If using only distance to the closest corner as the heuristics,
-      # Search nodes expanded on mediumCorners is 1555.
+
       total = 0
-      # Step 2: if there are more than 1 corner left
+      # if there are more than 1 corner left
       # find the shortest distance from the closest corner
-      # to the other corner that is closest to the closest corner
+      # to the next corner.
       corners_list.remove(closest_corner)
       while len(corners_list) > 0:
           distance_list = []
@@ -498,32 +501,32 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    def getMinimumWallsCrossed(position, dot, wallGrid):
+    def getMinimumWallsCrossed(position, dot, walls):
         wallsFromPos = 0
         wallsFromDot = 0
 
         x1 = min(position[0], dot[0])
-        x2 = max(position[0], dot[0]) + 1 # we need to move, otherwise we would already have eaten the dot
+        x2 = max(position[0], dot[0]) + 1 
 
         y1 = min(position[1], dot[1])
-        y2 = max(position[1], dot[1]) + 1 # same as for sweeping in the horizontal direction to detect vertical walls
+        y2 = max(position[1], dot[1]) + 1 
 
-        sweepx = range(x1, x2)
-        sweepy = range(y1, y2)
+        x_range = range(x1, x2)
+        y_range = range(y1, y2)
 
-        for xpos in sweepx:
-          if wallGrid[xpos][dot[1]]:
-            wallsFromDot += 1 # we cannot assume the wall is any longer than 1 here
-          if wallGrid[xpos][position[1]]:
-            wallsFromPos += 1 # if we chose to move directly towards the dot along this axis first
-
-        for ypos in sweepy:
-          if wallGrid[dot[0]][ypos]:
-            wallsFromDot += 1 # we cannot assume the wall is any longer than 1 here
-          if wallGrid[position[0]][ypos]:
+        for xpos in x_range:
+          if walls[xpos][dot[1]]:
+            wallsFromDot += 1
+          if walls[xpos][position[1]]:
             wallsFromPos += 1
 
-        return min(wallsFromPos, wallsFromDot) # we always have the choice of moving over and up, or up and over, etc.
+        for ypos in y_range:
+          if walls[dot[0]][ypos]:
+            wallsFromDot += 1
+          if walls[position[0]][ypos]:
+            wallsFromPos += 1
+
+        return min(wallsFromPos, wallsFromDot)
 
     value = 0
 
@@ -532,7 +535,6 @@ def foodHeuristic(state, problem):
 
     for dot in allDots:
         directDistance = util.manhattanDistance(position, dot) + getMinimumWallsCrossed(position, dot, walls)
-        # ensure thatwe don't overestimate the distance by taking a round-about path
         if directDistance > value:
           value = directDistance
     return value

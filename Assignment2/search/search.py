@@ -8,6 +8,10 @@
 # Abbeel in Spring 2013.
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
 
+# Referenced the following:
+# https://github.com/kalys/edx-ai-project1/blob/master/searchAgents.py
+# http://webcache.googleusercontent.com/search?q=cache:-nwPhJq5OGQJ:workplay.googlecode.com/files/searchAgents.py+&cd=1&hl=en&ct=clnk&gl=us
+# https://github.com/raysaagar/cs182/tree/master/asst1/search
 """
 In search.py, you will implement generic search algorithms which are called
 by Pacman agents (in searchAgents.py).
@@ -88,9 +92,8 @@ def depthFirstSearch(problem):
     explored = set();
     lifo_queue.push((problem.getStartState(),[],0));# push current state onto the stack as well as empty direction list, and 0 cost
 
-    while not lifo_queue.isEmpty(): # while queue is not empty
-        curState, curMoves, curCost = lifo_queue.pop(); # pop off the stuff off the stack
-
+    while not lifo_queue.isEmpty(): # while stack is not empty
+        curState, curMoves, curCost = lifo_queue.pop(); # pop off the stuff off the top stack
         if(curState in explored):
             continue;
 
@@ -146,7 +149,7 @@ def uniformCostSearch(problem):
         if problem.isGoalState(curState): # if goal state, return move list
             return curMoves;
 
-        for state, direction, cost in problem.getSuccessors(curState): # else get successors and push them on the stack
+        for state, direction, cost in problem.getSuccessors(curState): # else get successors and push them on the queue
             newMoves = curMoves + [direction]
             priorityQueue.push((state, curMoves+[direction], curCost), problem.getCostOfActions(newMoves)); # push onto priority queue with new move cost (current moves + direction you are going)
     return []; # if nothing found, return null list
