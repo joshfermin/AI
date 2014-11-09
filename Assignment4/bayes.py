@@ -18,7 +18,7 @@ class Node:
 def main():
 	BayesNet = Cancer.cancer()
 	engine = JunctionTreeEngine(BayesNet)
-	conditional = []
+	conditional = [] 
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "hg:j:m:v", ["help", "conditional=", "joint=", "marginal="])
 	except getopt.GetoptError as err:
@@ -35,7 +35,7 @@ def main():
 			sys.exit()
 		elif o in ("-g", "--conditional"):
 			args = a
-			parseConditionalArgs(a)
+			conditional = parseConditionalArgs(a)
 			# conditionalProbablity(args, BayesNet)
 		elif o in ("-j", "--joint"):
 			args = a
@@ -84,49 +84,38 @@ def jointProbability(args, BayesNet):
 			if argtype == "squiggle":
 				return
 
-def marginalProbability(args, BayesNet, Engine, toCalculate):
+#############################################
+# Calculates marginal probability for one var
+# args is argument passed in, Engine is the 
+# junctionTreeEngine from the toolbox, and
+# toCalculate is the node associated with the
+# arg to be calculated
+def marginalProbability(args, Engine, toCalculate):
 	arglookup = findArgValue(args)
 	Q = Engine.marginal(toCalculate)[0]
 	argtype = checkArgs(args)
-	
 	if argtype == "lower":
 		index = Q.generate_index([True], range(Q.nDims))
 		print "The marginal probability of " + args + "=true: ", Q[index]
+		return Q[index]
 	elif argtype == "squiggle":
 		index = Q.generate_index([False], range(Q.nDims))
 		print "The marginal probability of " + args + "=false: ", Q[index]
+		return Q[index]
 	elif argtype == "upper":
 		print "do something"
-	# elif argtype == "upper":
-	# 	prettyPrint(node.probability, args.lower())
-	# 	inverseProbabilities = dict()
-	# 	for key in node.probability:
-	# 		inverseProbabilities[key] = (1 - node.probability[key])
-	# 	prettyPrint(inverseProbabilities, "~" + args.lower())
-	# elif argtype == "squiggle":
-	# 	inverseProbabilities = dict()
-	# 	for key in node.probability:
-	# 		inverseProbabilities[key] = (1 - node.probability[key])
-	# 	prettyPrint(inverseProbabilities, args)
-			# sum up values in dict
-	return 
 
-def prettyPrint(dictionary, args):
-	print "{:<8} {:<10}".format("P", "P(" + args + ")")
-	print "-------------"
-	for k, v in dictionary.iteritems():
-		print "{:<8} {:<10}".format(k, v)
-	print "\n"
-
+#############################################
+# given part i.e. p|cx will return ['c', 'x']
 def parseConditionalArgs(args):
 	given = args.split("|", 1)[1]
 	given = list(given)
-	print given
+	return given
 
-	return 
-
+#############################################
+# checks if the argument was true/false or a 
+# probability distribution
 def checkArgs(args):
-	# checks the type of args
 	if args.islower():
 		if "~" in args:
 			return "squiggle"
@@ -134,9 +123,10 @@ def checkArgs(args):
 			return "lower"
 	elif args.isupper():
 		return "upper"
-	
+
+#############################################
+# returns the letter of the arg in lowercase
 def findArgValue(args):
-	# returns the letter of the arg in lowercase
 	if args.islower():
 		if "~" in args:
 			return args.translate(None, '~')
@@ -147,5 +137,3 @@ def findArgValue(args):
 
 if __name__ == "__main__":
 	main()
-
-#http://healthyalgorithms.com/2011/11/23/causal-modeling-in-python-bayesian-networks-in-pymc/
