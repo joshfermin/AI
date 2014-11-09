@@ -35,7 +35,7 @@ def main():
 			conditionalProbablity(args, engine, BayesNet)
 		elif o in ("-j", "--joint"):
 			args = a
-			jointProbability(args, BayesNet)
+			jointProbability(args, engine, BayesNet)
 		elif o in ("-m", "--marginal"):
 			args = a
 			marginalProbability(args, engine, BayesNet)
@@ -107,7 +107,7 @@ def conditionalProbablity(args, Engine, BayesNet):
 	return conditionalProbablity
 
 
-def jointProbability(args, BayesNet):
+def jointProbability(args, Engine, BayesNet):
 	print "\nThe joint probability for " + args + " is:\n"
 	argtype = checkArgs(args)
 	arglookup = findArgValue(args)
