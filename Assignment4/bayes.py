@@ -48,8 +48,11 @@ def conditionalProbablity(args, Engine, BayesNet):
 	conditionalNodes = []
 	conditionalType = []
 	conditionalBool = []
+	
+	# parsing the args i.e. splitting at the "|" pipe.
 	conditionalArray = parseConditionalArgs2(a)
 	arglookup = parseConditionalArgs1(a)
+
 	# for c|p~s, gives c node
 	for node in BayesNet.nodes:
 		if node.id == 0 and arglookup == 'p':
@@ -79,12 +82,14 @@ def conditionalProbablity(args, Engine, BayesNet):
 			if node.id == 4 and arg == 'd':
 				conditionalNodes.append(node)
 
-	# converts p and s nodes to booleans i.e. p - true, ~s is false
+	# converts p and s nodes to booleans i.e. p is true, ~s is false
 	for arg in conditionalType:
 		if arg == "lower":
 			conditionalBool.append(True)
 		if arg == "squiggle":
 			conditionalBool.append(False)
+
+	# gives evidence to the engine for the given nodes.
 	for arr_index, node in enumerate(conditionalNodes):
 		Engine.evidence[node] = conditionalBool[arr_index]
 
@@ -92,6 +97,7 @@ def conditionalProbablity(args, Engine, BayesNet):
 
 	index = Q.generate_index([False], range(Q.nDims))
 	conditionalProbablity = Q[index]
+
 	print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbablity
 	return conditionalProbablity
 
