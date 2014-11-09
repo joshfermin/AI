@@ -8,17 +8,9 @@ from pbnt.Distribution import *
 from pbnt.Node import *
 from pbnt.Inference import *
 
-class Node:
-	def __init__(self, children, parents, probability, value):
-		self.children = children
-		self.parents = parents
-		self.probability = probability
-		self.value = value
-
 def main():
 	BayesNet = Cancer.cancer()
 	engine = JunctionTreeEngine(BayesNet)
-
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "hg:j:m:v", ["help", "conditional=", "joint=", "marginal="])
 	except getopt.GetoptError as err:
