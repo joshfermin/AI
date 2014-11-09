@@ -162,6 +162,8 @@ def parseConditionalArgs2(args):
 			conditionalArgs2.append(string)
 	return conditionalArgs2
 
+#############################################
+# toCalculate part i.e. p|c~x will return string p
 def parseConditionalArgs1(args):
 	given = args.split("|", 1)[0]
 	return given
