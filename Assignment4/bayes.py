@@ -8,6 +8,11 @@ from pbnt.Distribution import *
 from pbnt.Node import *
 from pbnt.Inference import *
 
+# Josh Fermin
+# Artificial Intelligence
+# Programming Assignment 4
+
+
 def main():
 	BayesNet = Cancer.cancer()
 	engine = JunctionTreeEngine(BayesNet)
@@ -48,7 +53,7 @@ def conditionalProbablity(args, Engine, BayesNet):
 	conditionalNodes = []
 	conditionalType = []
 	conditionalBool = []
-	
+
 	# parsing the args i.e. splitting at the "|" pipe.
 	conditionalArray = parseConditionalArgs2(a)
 	arglookup = parseConditionalArgs1(a)
