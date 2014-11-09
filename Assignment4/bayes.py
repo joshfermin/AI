@@ -65,7 +65,6 @@ def conditionalProbablity(args, Engine, BayesNet):
 	conditionalBool = []
 	conditionalArray = parseConditionalArgs2(a)
 	arglookup = parseConditionalArgs1(a)
-
 	# for c|p~s, gives c node
 	for node in BayesNet.nodes:
 		if node.id == 0 and arglookup == 'p':
@@ -77,8 +76,6 @@ def conditionalProbablity(args, Engine, BayesNet):
 		if node.id == 3 and arglookup == 'x':
 			toCalculate = node
 		if node.id == 4 and arglookup == 'd':
-			toCalculate = node
-		else:
 			toCalculate = node
 
 	# for c|p~s, appends p and s nodes to conditionalNode array
@@ -105,7 +102,6 @@ def conditionalProbablity(args, Engine, BayesNet):
 			conditionalBool.append(False)
 	for arr_index, node in enumerate(conditionalNodes):
 		Engine.evidence[node] = conditionalBool[arr_index]
-
 	Q = Engine.marginal(toCalculate)[0]
 
 	index = Q.generate_index([False], range(Q.nDims))
