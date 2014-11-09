@@ -11,7 +11,7 @@ class Node:
 def main():
 	BayesNet = CreateBayesNet();
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hgjm:v", ["help", "conditional=", "joint=", "marginal="])
+		opts, args = getopt.getopt(sys.argv[1:], "hg:j:m:v", ["help", "conditional=", "joint=", "marginal="])
 	except getopt.GetoptError as err:
         # print help information and exit:
 		print str(err) # will print something like "option -a not recognized"

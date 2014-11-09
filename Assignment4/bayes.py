@@ -18,8 +18,9 @@ class Node:
 def main():
 	BayesNet = Cancer.cancer()
 	engine = JunctionTreeEngine(BayesNet)
+	conditional = []
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hgjm:v", ["help", "conditional=", "joint=", "marginal="])
+		opts, args = getopt.getopt(sys.argv[1:], "hg:j:m:v", ["help", "conditional=", "joint=", "marginal="])
 	except getopt.GetoptError as err:
         # print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -27,32 +28,31 @@ def main():
 	output = None
 	verbose = False
 	for o, a in opts:
-		arglookup = findArgValue(a)
-		for node in BayesNet.nodes:
-			if node.id == 0 and arglookup == 'p':
-				toCalculate = node
-			if node.id == 1 and arglookup == 's':
-				toCalculate = node
-			if node.id == 2 and arglookup == 'c':
-				toCalculate = node
-			if node.id == 3 and arglookup == 'x':
-				toCalculate = node
-			if node.id == 4 and arglookup == 'd':
-				toCalculate = node
-
 		if o == "-v":
-			verbose = True # what does this do?
-			# somehow makes args work
+			verbose = True 
 		elif o in ("-h", "--help"):
 			print "-g is flag for conditional probability\n-j is flag for joint probability\n-m is flag for marginal probability"
 			sys.exit()
 		elif o in ("-g", "--conditional"):
 			args = a
-			conditionalProbablity(args, BayesNet)
+			parseConditionalArgs(a)
+			# conditionalProbablity(args, BayesNet)
 		elif o in ("-j", "--joint"):
 			args = a
 			jointProbability(args, BayesNet)
 		elif o in ("-m", "--marginal"):
+			arglookup = findArgValue(a)
+			for node in BayesNet.nodes:
+				if node.id == 0 and arglookup == 'p':
+					toCalculate = node
+				if node.id == 1 and arglookup == 's':
+					toCalculate = node
+				if node.id == 2 and arglookup == 'c':
+					toCalculate = node
+				if node.id == 3 and arglookup == 'x':
+					toCalculate = node
+				if node.id == 4 and arglookup == 'd':
+					toCalculate = node
 			args = a
 			marginalProbability(args, BayesNet, engine, toCalculate)
 		else:
@@ -95,6 +95,8 @@ def marginalProbability(args, BayesNet, Engine, toCalculate):
 	elif argtype == "squiggle":
 		index = Q.generate_index([False], range(Q.nDims))
 		print "The marginal probability of " + args + "=false: ", Q[index]
+	elif argtype == "upper":
+		print "do something"
 	# elif argtype == "upper":
 	# 	prettyPrint(node.probability, args.lower())
 	# 	inverseProbabilities = dict()
@@ -115,6 +117,12 @@ def prettyPrint(dictionary, args):
 	for k, v in dictionary.iteritems():
 		print "{:<8} {:<10}".format(k, v)
 	print "\n"
+
+def parseConditionalArgs(args):
+	given = args.split("|", 1)[1]
+	print given
+
+	return 
 
 def checkArgs(args):
 	# checks the type of args
