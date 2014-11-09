@@ -45,6 +45,11 @@ def main():
 		else:
 			assert False, "unhandled option"
 
+#############################################
+# Calculates conditional probability for one var
+# args is argument passed in, Engine is the 
+# junctionTreeEngine from the toolbox, and Bayes
+# Net is the the net.
 def conditionalProbablity(args, Engine, BayesNet):
 	a = args
 	conditionalArray = []
@@ -115,9 +120,8 @@ def jointProbability(args, BayesNet):
 #############################################
 # Calculates marginal probability for one var
 # args is argument passed in, Engine is the 
-# junctionTreeEngine from the toolbox, and
-# toCalculate is the node associated with the
-# arg to be calculated
+# junctionTreeEngine from the toolbox, and Bayes
+# Net is the the net.
 def marginalProbability(args, Engine, BayesNet):
 
 	arglookup = findArgValue(args)
