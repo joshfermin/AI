@@ -120,6 +120,7 @@ def prettyPrint(dictionary, args):
 
 def parseConditionalArgs(args):
 	given = args.split("|", 1)[1]
+	given = list(given)
 	print given
 
 	return 
