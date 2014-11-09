@@ -40,20 +40,8 @@ def main():
 			args = a
 			jointProbability(args, BayesNet)
 		elif o in ("-m", "--marginal"):
-			arglookup = findArgValue(a)
-			for node in BayesNet.nodes:
-				if node.id == 0 and arglookup == 'p':
-					toCalculate = node
-				if node.id == 1 and arglookup == 's':
-					toCalculate = node
-				if node.id == 2 and arglookup == 'c':
-					toCalculate = node
-				if node.id == 3 and arglookup == 'x':
-					toCalculate = node
-				if node.id == 4 and arglookup == 'd':
-					toCalculate = nodes
 			args = a
-			marginalProbability(args, engine, toCalculate)
+			marginalProbability(args, engine, BayesNet)
 		else:
 			assert False, "unhandled option"
 
@@ -102,14 +90,13 @@ def conditionalProbablity(args, Engine, BayesNet):
 			conditionalBool.append(False)
 	for arr_index, node in enumerate(conditionalNodes):
 		Engine.evidence[node] = conditionalBool[arr_index]
+
 	Q = Engine.marginal(toCalculate)[0]
 
 	index = Q.generate_index([False], range(Q.nDims))
 	conditionalProbablity = Q[index]
 	print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbablity
 	return conditionalProbablity
-			
-	
 
 
 def jointProbability(args, BayesNet):
@@ -131,8 +118,21 @@ def jointProbability(args, BayesNet):
 # junctionTreeEngine from the toolbox, and
 # toCalculate is the node associated with the
 # arg to be calculated
-def marginalProbability(args, Engine, toCalculate):
+def marginalProbability(args, Engine, BayesNet):
+
 	arglookup = findArgValue(args)
+	for node in BayesNet.nodes:
+		if node.id == 0 and arglookup == 'p':
+			toCalculate = node
+		if node.id == 1 and arglookup == 's':
+			toCalculate = node
+		if node.id == 2 and arglookup == 'c':
+			toCalculate = node
+		if node.id == 3 and arglookup == 'x':
+			toCalculate = node
+		if node.id == 4 and arglookup == 'd':
+			toCalculate = nodes
+
 	Q = Engine.marginal(toCalculate)[0]
 	argtype = checkArgs(args)
 	if argtype == "lower":
