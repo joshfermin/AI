@@ -12,7 +12,6 @@ from pbnt.Inference import *
 # Artificial Intelligence
 # Programming Assignment 4
 
-
 def main():
 	BayesNet = Cancer.cancer()
 	engine = JunctionTreeEngine(BayesNet)
@@ -32,10 +31,12 @@ def main():
 			sys.exit()
 		elif o in ("-g", "--conditional"):
 			args = a
-			conditionalProbablity(args, engine, BayesNet)
+			conditionalProbability(args, engine, BayesNet)
 		elif o in ("-j", "--joint"):
 			args = a
-			jointProbability(args, engine, BayesNet)
+			argsarray = parseJointArgs(args)
+			result = []
+			jointProbabilityDistribution(args, engine, BayesNet, argsarray)
 		elif o in ("-m", "--marginal"):
 			args = a
 			marginalProbability(args, engine, BayesNet)
@@ -47,7 +48,7 @@ def main():
 # args is argument passed in, Engine is the 
 # junctionTreeEngine from the toolbox, and Bayes
 # Net is the the net.
-def conditionalProbablity(args, Engine, BayesNet):
+def conditionalProbability(args, Engine, BayesNet):
 	a = args
 	conditionalArray = []
 	conditionalNodes = []
@@ -57,18 +58,28 @@ def conditionalProbablity(args, Engine, BayesNet):
 	# parsing the args i.e. splitting at the "|" pipe.
 	conditionalArray = parseConditionalArgs2(a)
 	arglookup = parseConditionalArgs1(a)
+	arglookup2 = findArgValue(arglookup)
+
+	argValue = checkArgs(arglookup)
+	if argValue == "lower":
+		argValue = True
+	if argValue == "squiggle":
+		argValue = False
+
+	# if checkArgs()
+	# print conditionalArray
 
 	# for c|p~s, gives c node
 	for node in BayesNet.nodes:
-		if node.id == 0 and arglookup == 'p':
+		if node.id == 0 and arglookup2 == 'p':
 			toCalculate = node
-		if node.id == 1 and arglookup == 's':
+		if node.id == 1 and arglookup2 == 's':
 			toCalculate = node
-		if node.id == 2 and arglookup == 'c':
+		if node.id == 2 and arglookup2 == 'c':
 			toCalculate = node
-		if node.id == 3 and arglookup == 'x':
+		if node.id == 3 and arglookup2 == 'x':
 			toCalculate = node
-		if node.id == 4 and arglookup == 'd':
+		if node.id == 4 and arglookup2 == 'd':
 			toCalculate = node
 
 	# for c|p~s, appends p and s nodes to conditionalNode array
@@ -96,29 +107,39 @@ def conditionalProbablity(args, Engine, BayesNet):
 
 	# gives evidence to the engine for the given nodes.
 	for arr_index, node in enumerate(conditionalNodes):
+		# print conditionalBool[arr_index]
 		Engine.evidence[node] = conditionalBool[arr_index]
 
 	Q = Engine.marginal(toCalculate)[0]
 
-	index = Q.generate_index([False], range(Q.nDims))
-	conditionalProbablity = Q[index]
 
-	print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbablity
-	return conditionalProbablity
+	index = Q.generate_index([argValue], range(Q.nDims))
+	conditionalProbability = Q[index]
+
+	print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbability
+	return conditionalProbability
 
 
-def jointProbability(args, Engine, BayesNet):
-	print "\nThe joint probability for " + args + " is:\n"
-	argtype = checkArgs(args)
-	arglookup = findArgValue(args)
-	for node in BayesNet:
-		if node.value == arglookup:
-			if argtype == "lower":
-				return
-			if argtype == "upper":
-				return
-			if argtype == "squiggle":
-				return
+def jointProbabilityDistribution(args, Engine, BayesNet, argsarray):
+	test = jointProbability(args, Engine, BayesNet, argsarray)
+	print test
+
+def jointProbability(args, Engine, BayesNet, argsarray):
+	print argsarray
+	if len(argsarray) == 2:
+
+		conditionalArgs = argsarray[0] + "|" + argsarray[1]
+		marginalArgs = argsarray[1]
+		return conditionalProbability(conditionalArgs, Engine, BayesNet) * marginalProbability(marginalArgs, Engine, BayesNet)
+	elif len(argsarray) > 2:
+		conditionalArgs = argsarray[0] + "|" + argsarray[1]
+		toCalculate = argsarray.pop(0)
+		args = "".join(argsarray)
+		argsarray = parseJointArgs(args)
+		return conditionalProbability(conditionalArgs, Engine, BayesNet) * jointProbability(args, Engine, BayesNet, argsarray)
+
+	# return conditionalProbability(args)
+
 
 #############################################
 # Calculates marginal probability for one var
@@ -126,7 +147,6 @@ def jointProbability(args, Engine, BayesNet):
 # junctionTreeEngine from the toolbox, and Bayes
 # Net is the the net.
 def marginalProbability(args, Engine, BayesNet):
-
 	arglookup = findArgValue(args)
 	for node in BayesNet.nodes:
 		if node.id == 0 and arglookup == 'p':
@@ -138,8 +158,7 @@ def marginalProbability(args, Engine, BayesNet):
 		if node.id == 3 and arglookup == 'x':
 			toCalculate = node
 		if node.id == 4 and arglookup == 'd':
-			toCalculate = nodes
-
+			toCalculate = node
 	Q = Engine.marginal(toCalculate)[0]
 	argtype = checkArgs(args)
 	if argtype == "lower":
@@ -151,7 +170,16 @@ def marginalProbability(args, Engine, BayesNet):
 		print "The marginal probability of " + args + "=false: ", Q[index]
 		return Q[index]
 	elif argtype == "upper":
-		print "do something"
+		indexArray = []
+		indexTrue = Q.generate_index([True], range(Q.nDims))
+		indexArray.append(indexTrue)
+		print "The marginal probability of " + args + "=true: ", Q[indexTrue]
+		indexFalse = Q.generate_index([False], range(Q.nDims))
+		indexArray.append(indexFalse)
+		print "The marginal probability of " + args + "=false: ", Q[indexFalse]
+		return indexArray
+
+	
 
 #############################################
 # given part i.e. p|c~x will return ['c', '~x']
@@ -174,6 +202,19 @@ def parseConditionalArgs2(args):
 def parseConditionalArgs1(args):
 	given = args.split("|", 1)[0]
 	return given
+
+def parseJointArgs(args):
+	given = list(args)
+	given = iter(given)
+	jointArgs = []
+	skip = False
+	for string in given:
+		if string == "~":
+			jointArgs.append("~" + given.next())
+			continue
+		else:
+			jointArgs.append(string)
+	return jointArgs
 
 #############################################
 # checks if the argument was true/false or a 
