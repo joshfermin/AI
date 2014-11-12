@@ -8,9 +8,32 @@ from pbnt.Distribution import *
 from pbnt.Node import *
 from pbnt.Inference import *
 
-# Josh Fermin
-# Artificial Intelligence
-# Programming Assignment 4
+"""
+Josh Fermin
+Artificial Intelligence
+Programming Assignment 4
+
+Issues:
+	After calculating out the marginal probability by hand,
+	the marginal values returned by the toolbox are incorrect
+	for all variables except for Pollution and Smoker. Because
+	of this, it will skew the answers for joint and conditional
+	probability. 
+
+How to Use:
+    Flags
+	    -g  conditional probablity
+	    -j  joint probability
+	    -m  marginal probability
+	    -h  help
+
+    Arguments (Distribution, true, false)
+	    P,p,~p  pollution
+	    S,s,~s  Smoker   
+	    C,c,~c  Cancer   
+	    D,d,~d  Dyspnoea 
+	    X,x,~d  X-Ray    
+"""
 
 def main():
 	BayesNet = Cancer.cancer()
@@ -107,8 +130,8 @@ def conditionalProbability(args, Engine, BayesNet, debug=True):
 
 	# gives evidence to the engine for the given nodes.
 	for arr_index, node in enumerate(conditionalNodes):
-		print conditionalBool[arr_index]
-		print node.name
+		# print conditionalBool[arr_index]
+		# print node.name
 		Engine.evidence[node] = conditionalBool[arr_index]
 
 	Q = Engine.marginal(toCalculate)[0]
@@ -123,26 +146,41 @@ def conditionalProbability(args, Engine, BayesNet, debug=True):
 
 def jointProbabilityDistribution(args, Engine, BayesNet, argsarray):
 	result = jointProbability(args, Engine, BayesNet, argsarray)
-	print result
+	print "The joint probability of", args, "is:", result
 
 def jointProbability(args, Engine, BayesNet, argsarray):
 	# print argsarray
-	if len(argsarray) <= 1:
-		print "Joint Probability Distribution must take at least 2 arguments"
-		sys.exit(2)
-	if len(argsarray) == 2:
-		conditionalArgs = argsarray[0] + "|" + argsarray[1]
-		marginalArgs = argsarray[1]
-		return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
-	elif len(argsarray) > 2:
-		conditionalArgs = argsarray[0] + "|" + argsarray[1]
-		toCalculate = argsarray.pop(0)
-		args = "".join(argsarray)
-		argsarray = parseJointArgs(args)
-		return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
-
+	typeArgs = checkArgs(args)
+	if typeArgs == "lower":
+		if len(argsarray) <= 1:
+			print "Joint Probability Distribution must take at least 2 arguments"
+			sys.exit(2)
+		elif len(argsarray) == 2:
+			conditionalArgs = argsarray[0] + "|" + argsarray[1]
+			marginalArgs = argsarray[1]
+			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
+		elif len(argsarray) > 2:
+			conditionalArgs = argsarray[0] + "|" + argsarray[1]
+			toCalculate = argsarray.pop(0)
+			args = "".join(argsarray)
+			argsarray = parseJointArgs(args)
+			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
+	elif typeArgs == "upper":
+		print "upper"
+		if len(argsarray) <= 1:
+			print "Joint Probability Distribution must take at least 2 arguments"
+			sys.exit(2)
+		elif len(argsarray) == 2:
+			conditionalArgs = argsarray[0] + "|" + argsarray[1]
+			marginalArgs = argsarray[1]
+			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
+		elif len(argsarray) > 2:
+			conditionalArgs = argsarray[0] + "|" + argsarray[1]
+			toCalculate = argsarray.pop(0)
+			args = "".join(argsarray)
+			argsarray = parseJointArgs(args)
+			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
 	# return conditionalProbability(args)
-
 
 #############################################
 # Calculates marginal probability for one var
@@ -186,6 +224,9 @@ def marginalProbability(args, Engine, BayesNet, debug=True):
 		return indexArray
 
 	
+"""
+Functions for parsing the command line arguments:
+"""
 
 #############################################
 # given part i.e. p|c~x will return ['c', '~x']
@@ -209,6 +250,9 @@ def parseConditionalArgs1(args):
 	given = args.split("|", 1)[0]
 	return given
 
+#############################################
+# given a string of args i.e. "PCS" will return
+# an array i.e. ['P', 'C', 'S']
 def parseJointArgs(args):
 	given = list(args)
 	given = iter(given)
