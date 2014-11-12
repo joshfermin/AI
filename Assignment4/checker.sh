@@ -1,0 +1,8 @@
+python bayes.py "-mD"
+python bayes.py "-jPSC"
+python bayes.py "-jpsc"
+python bayes.py "-j~p~s~c"
+python bayes.py "-gc|s"
+python bayes.py "-g~x|~s~c"
+python bayes.py "-jPCX"
+python bayes.py "-mC"

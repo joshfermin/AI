@@ -48,7 +48,7 @@ def main():
 # args is argument passed in, Engine is the 
 # junctionTreeEngine from the toolbox, and Bayes
 # Net is the the net.
-def conditionalProbability(args, Engine, BayesNet):
+def conditionalProbability(args, Engine, BayesNet, debug=True):
 	a = args
 	conditionalArray = []
 	conditionalNodes = []
@@ -107,7 +107,8 @@ def conditionalProbability(args, Engine, BayesNet):
 
 	# gives evidence to the engine for the given nodes.
 	for arr_index, node in enumerate(conditionalNodes):
-		# print conditionalBool[arr_index]
+		print conditionalBool[arr_index]
+		print node.name
 		Engine.evidence[node] = conditionalBool[arr_index]
 
 	Q = Engine.marginal(toCalculate)[0]
@@ -116,27 +117,29 @@ def conditionalProbability(args, Engine, BayesNet):
 	index = Q.generate_index([argValue], range(Q.nDims))
 	conditionalProbability = Q[index]
 
-	print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbability
+	if debug: print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbability
 	return conditionalProbability
 
 
 def jointProbabilityDistribution(args, Engine, BayesNet, argsarray):
-	test = jointProbability(args, Engine, BayesNet, argsarray)
-	print test
+	result = jointProbability(args, Engine, BayesNet, argsarray)
+	print result
 
 def jointProbability(args, Engine, BayesNet, argsarray):
-	print argsarray
+	# print argsarray
+	if len(argsarray) <= 1:
+		print "Joint Probability Distribution must take at least 2 arguments"
+		sys.exit(2)
 	if len(argsarray) == 2:
-
 		conditionalArgs = argsarray[0] + "|" + argsarray[1]
 		marginalArgs = argsarray[1]
-		return conditionalProbability(conditionalArgs, Engine, BayesNet) * marginalProbability(marginalArgs, Engine, BayesNet)
+		return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
 	elif len(argsarray) > 2:
 		conditionalArgs = argsarray[0] + "|" + argsarray[1]
 		toCalculate = argsarray.pop(0)
 		args = "".join(argsarray)
 		argsarray = parseJointArgs(args)
-		return conditionalProbability(conditionalArgs, Engine, BayesNet) * jointProbability(args, Engine, BayesNet, argsarray)
+		return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
 
 	# return conditionalProbability(args)
 
@@ -146,8 +149,11 @@ def jointProbability(args, Engine, BayesNet, argsarray):
 # args is argument passed in, Engine is the 
 # junctionTreeEngine from the toolbox, and Bayes
 # Net is the the net.
-def marginalProbability(args, Engine, BayesNet):
+def marginalProbability(args, Engine, BayesNet, debug=True):
 	arglookup = findArgValue(args)
+	if len(parseJointArgs(args)) > 1:
+		print "Marginal Probability Distribution can only take one argument"
+		sys.exit(2)
 	for node in BayesNet.nodes:
 		if node.id == 0 and arglookup == 'p':
 			toCalculate = node
@@ -163,20 +169,20 @@ def marginalProbability(args, Engine, BayesNet):
 	argtype = checkArgs(args)
 	if argtype == "lower":
 		index = Q.generate_index([True], range(Q.nDims))
-		print "The marginal probability of " + args + "=true: ", Q[index]
+		if debug: print "The marginal probability of " + args + "=true: ", Q[index]
 		return Q[index]
 	elif argtype == "squiggle":
 		index = Q.generate_index([False], range(Q.nDims))
-		print "The marginal probability of " + args + "=false: ", Q[index]
+		if debug: print "The marginal probability of " + args + "=false: ", Q[index]
 		return Q[index]
 	elif argtype == "upper":
 		indexArray = []
 		indexTrue = Q.generate_index([True], range(Q.nDims))
 		indexArray.append(indexTrue)
-		print "The marginal probability of " + args + "=true: ", Q[indexTrue]
+		if debug: print "The marginal probability of " + args + "=true: ", Q[indexTrue]
 		indexFalse = Q.generate_index([False], range(Q.nDims))
 		indexArray.append(indexFalse)
-		print "The marginal probability of " + args + "=false: ", Q[indexFalse]
+		if debug: print "The marginal probability of " + args + "=false: ", Q[indexFalse]
 		return indexArray
 
 	
