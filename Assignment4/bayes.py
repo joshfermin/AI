@@ -20,6 +20,10 @@ Issues:
 	of this, it will skew the answers for joint and conditional
 	probability. 
 
+	Joint probability distribution is not working for more than 3
+	variables. I.e. -jPSC will not work. It is only working for 2 
+	variables.
+
 How to Use:
     Flags
 	    -g  conditional probablity
@@ -32,7 +36,7 @@ How to Use:
 	    S,s,~s  Smoker   
 	    C,c,~c  Cancer   
 	    D,d,~d  Dyspnoea 
-	    X,x,~d  X-Ray    
+	    X,x,~x  X-Ray    
 """
 
 def main():
@@ -143,19 +147,25 @@ def conditionalProbability(args, Engine, BayesNet, debug=True):
 	if debug: print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbability
 	return conditionalProbability
 
-
+#############################################
+# Calculates joint probability by calling the 
+# recursive jointProbability function
 def jointProbabilityDistribution(args, Engine, BayesNet, argsarray):
 	result = jointProbability(args, Engine, BayesNet, argsarray)
-	print "The joint probability of", args, "is:", result
+	if checkArgs(args) == "lower":
+		print "The joint probability of", args, "is:", result
 
+#############################################
+# Calculates joint probability by using a recursive
+# method. (this only works for the lowercase) I.e.  
+# P(Z=z, X=x, Y=y) = jointProbability(Z=z, jointProbability(X=x,Y=y)))
 def jointProbability(args, Engine, BayesNet, argsarray):
-	# print argsarray
 	typeArgs = checkArgs(args)
+	if len(argsarray) <= 1:
+			print "Joint Probability Distribution must take at least 2 arguments"
+			sys.exit(2)	
 	if typeArgs == "lower":
-		if len(argsarray) <= 1:
-			print "Joint Probability Distribution must take at least 2 arguments"
-			sys.exit(2)
-		elif len(argsarray) == 2:
+		if len(argsarray) == 2:
 			conditionalArgs = argsarray[0] + "|" + argsarray[1]
 			marginalArgs = argsarray[1]
 			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
@@ -165,21 +175,31 @@ def jointProbability(args, Engine, BayesNet, argsarray):
 			args = "".join(argsarray)
 			argsarray = parseJointArgs(args)
 			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
-	elif typeArgs == "upper":
-		print "upper"
-		if len(argsarray) <= 1:
-			print "Joint Probability Distribution must take at least 2 arguments"
-			sys.exit(2)
-		elif len(argsarray) == 2:
-			conditionalArgs = argsarray[0] + "|" + argsarray[1]
-			marginalArgs = argsarray[1]
-			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
+	if typeArgs == "upper":
+		if len(argsarray) == 2:
+			conditional = []
+			marginal0 = marginalProbability(argsarray[0], Engine, BayesNet, False)
+			marginal1 = marginalProbability(argsarray[1], Engine, BayesNet, False)
+			marginal0 = map(str, marginal0)
+			marginal1 = map(str, marginal1)
+
+			conditionalArg0 = args[0].lower() + "|" + args[1].lower()
+			conditionalArg1 = "~" + args[0].lower() + "|" + args[1].lower()
+			conditionalArg2 = args[0].lower() + "|" + "~" + args[1].lower()
+			conditionalArg3 =  "~" + args[0].lower() + "|" + "~" + args[1].lower()
+
+			j1 = conditionalProbability(conditionalArg0, Engine, BayesNet, False) * double(marginal0[0])
+			j2 = conditionalProbability(conditionalArg1, Engine, BayesNet, False) * double(marginal0[0])
+			j3 = conditionalProbability(conditionalArg2, Engine, BayesNet, False) * double(marginal0[1])
+			j4 = conditionalProbability(conditionalArg3, Engine, BayesNet, False) * double(marginal0[1])
+
+			print "The joint probability of", conditionalArg0.translate(None, '|'), "is:", j1
+			print "The joint probability of", conditionalArg1.translate(None, '|'), "is:", j2
+			print "The joint probability of", conditionalArg2.translate(None, '|'), "is:", j3
+			print "The joint probability of", conditionalArg3.translate(None, '|'), "is:", j4
+			return
 		elif len(argsarray) > 2:
-			conditionalArgs = argsarray[0] + "|" + argsarray[1]
-			toCalculate = argsarray.pop(0)
-			args = "".join(argsarray)
-			argsarray = parseJointArgs(args)
-			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
+			return
 	# return conditionalProbability(args)
 
 #############################################
@@ -216,10 +236,10 @@ def marginalProbability(args, Engine, BayesNet, debug=True):
 	elif argtype == "upper":
 		indexArray = []
 		indexTrue = Q.generate_index([True], range(Q.nDims))
-		indexArray.append(indexTrue)
+		indexArray.append(Q[indexTrue])
 		if debug: print "The marginal probability of " + args + "=true: ", Q[indexTrue]
 		indexFalse = Q.generate_index([False], range(Q.nDims))
-		indexArray.append(indexFalse)
+		indexArray.append(Q[indexFalse])
 		if debug: print "The marginal probability of " + args + "=false: ", Q[indexFalse]
 		return indexArray
 
