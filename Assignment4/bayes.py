@@ -13,6 +13,8 @@ Josh Fermin
 Artificial Intelligence
 Programming Assignment 4
 
+Collaborated with: Edward Zhu, Louis Bouddhou, Sheefali Tewari
+
 Issues:
 	After calculating out the marginal probability by hand,
 	the marginal values returned by the toolbox are incorrect
@@ -30,7 +32,7 @@ How to Use:
 	    -j  joint probability
 	    -m  marginal probability
 	    -h  help
-
+	    
     Arguments (Distribution, true, false)
 	    P,p,~p  pollution
 	    S,s,~s  Smoker   
@@ -75,131 +77,72 @@ def main():
 # args is argument passed in, Engine is the 
 # junctionTreeEngine from the toolbox, and Bayes
 # Net is the the net.
-def conditionalProbability(args, Engine, BayesNet, debug=True):
-	a = args
-	conditionalArray = []
-	conditionalNodes = []
-	conditionalType = []
-	conditionalBool = []
+def conditionalProbability(args, engine, BayesNet, debug=True):
+	conditionalTuples = []
 
-	# parsing the args i.e. splitting at the "|" pipe.
-	conditionalArray = parseConditionalArgs2(a)
-	arglookup = parseConditionalArgs1(a)
-	arglookup2 = findArgValue(arglookup)
+	left, given = parseConditionalArgs(args)
 
-	argValue = checkArgs(arglookup)
-	if argValue == "lower":
-		argValue = True
-	if argValue == "squiggle":
-		argValue = False
+	leftTuple = bruteforcetuple(BayesNet, left)
 
-	# if checkArgs()
-	# print conditionalArray
+	#list of tuples for given conditions
+	for letter in given:
+		conditionalTuples.append(bruteforcetuple(BayesNet, letter))
 
-	# for c|p~s, gives c node
-	for node in BayesNet.nodes:
-		if node.id == 0 and arglookup2 == 'p':
-			toCalculate = node
-		if node.id == 1 and arglookup2 == 's':
-			toCalculate = node
-		if node.id == 2 and arglookup2 == 'c':
-			toCalculate = node
-		if node.id == 3 and arglookup2 == 'x':
-			toCalculate = node
-		if node.id == 4 and arglookup2 == 'd':
-			toCalculate = node
+	for condition, truth in conditionalTuples:
+		engine.evidence[condition] = truth
 
-	# for c|p~s, appends p and s nodes to conditionalNode array
-	for node in BayesNet.nodes:
-		for arg in conditionalArray:
-			conditionalType.append(checkArgs(arg))
-			arg = findArgValue(arg)
-			if node.id == 0 and arg == 'p':
-				conditionalNodes.append(node)
-			if node.id == 1 and arg == 's':
-				conditionalNodes.append(node)
-			if node.id == 2 and arg == 'c':
-				conditionalNodes.append(node)
-			if node.id == 3 and arg == 'x':
-				conditionalNodes.append(node)
-			if node.id == 4 and arg == 'd':
-				conditionalNodes.append(node)
+	# left side of | 
+	toCalculate, leftTruth = leftTuple
 
-	# converts p and s nodes to booleans i.e. p is true, ~s is false
-	for arg in conditionalType:
-		if arg == "lower":
-			conditionalBool.append(True)
-		if arg == "squiggle":
-			conditionalBool.append(False)
+	Q = engine.marginal(toCalculate)[0]
+	index = Q.generate_index([leftTruth], range(Q.nDims))
+	conditionalProbablity = Q[index]
 
-	# gives evidence to the engine for the given nodes.
-	for arr_index, node in enumerate(conditionalNodes):
-		# print conditionalBool[arr_index]
-		# print node.name
-		Engine.evidence[node] = conditionalBool[arr_index]
-
-	Q = Engine.marginal(toCalculate)[0]
-
-
-	index = Q.generate_index([argValue], range(Q.nDims))
-	conditionalProbability = Q[index]
-
-	if debug: print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbability
-	return conditionalProbability
+	if debug: print "The conditional probability of", toCalculate.name, "=", leftTruth, ", given", given, "is: ", conditionalProbablity
+	return conditionalProbablity
 
 #############################################
 # Calculates joint probability by calling the 
 # recursive jointProbability function
 def jointProbabilityDistribution(args, Engine, BayesNet, argsarray):
 	result = jointProbability(args, Engine, BayesNet, argsarray)
-	if checkArgs(args) == "lower":
-		print "The joint probability of", args, "is:", result
+	print "The joint probability of", args, "is:", result
 
 #############################################
 # Calculates joint probability by using a recursive
 # method. (this only works for the lowercase) I.e.  
 # P(Z=z, X=x, Y=y) = jointProbability(Z=z, jointProbability(X=x,Y=y)))
-def jointProbability(args, Engine, BayesNet, argsarray):
+def jointProbability(args, engine, BayesNet, argsarray):
 	typeArgs = checkArgs(args)
-	if len(argsarray) <= 1:
-			print "Joint Probability Distribution must take at least 2 arguments"
-			sys.exit(2)	
 	if typeArgs == "lower":
-		if len(argsarray) == 2:
+		if len(argsarray) <= 1:
+			print "Joint Probability Distribution must take at least 2 arguments"
+			sys.exit(2)
+		elif len(argsarray) == 2:
 			conditionalArgs = argsarray[0] + "|" + argsarray[1]
 			marginalArgs = argsarray[1]
-			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
+			return conditionalProbability(conditionalArgs, engine, BayesNet, False) * marginalProbability(marginalArgs, engine, BayesNet, False)
 		elif len(argsarray) > 2:
 			conditionalArgs = argsarray[0] + "|" + argsarray[1]
 			toCalculate = argsarray.pop(0)
 			args = "".join(argsarray)
 			argsarray = parseJointArgs(args)
-			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
-	if typeArgs == "upper":
-		if len(argsarray) == 2:
-			conditional = []
-			marginal0 = marginalProbability(argsarray[0], Engine, BayesNet, False)
-			marginal1 = marginalProbability(argsarray[1], Engine, BayesNet, False)
-			marginal0 = map(str, marginal0)
-			marginal1 = map(str, marginal1)
-
-			conditionalArg0 = args[0].lower() + "|" + args[1].lower()
-			conditionalArg1 = "~" + args[0].lower() + "|" + args[1].lower()
-			conditionalArg2 = args[0].lower() + "|" + "~" + args[1].lower()
-			conditionalArg3 =  "~" + args[0].lower() + "|" + "~" + args[1].lower()
-
-			j1 = conditionalProbability(conditionalArg0, Engine, BayesNet, False) * double(marginal0[0])
-			j2 = conditionalProbability(conditionalArg1, Engine, BayesNet, False) * double(marginal0[0])
-			j3 = conditionalProbability(conditionalArg2, Engine, BayesNet, False) * double(marginal0[1])
-			j4 = conditionalProbability(conditionalArg3, Engine, BayesNet, False) * double(marginal0[1])
-
-			print "The joint probability of", conditionalArg0.translate(None, '|'), "is:", j1
-			print "The joint probability of", conditionalArg1.translate(None, '|'), "is:", j2
-			print "The joint probability of", conditionalArg2.translate(None, '|'), "is:", j3
-			print "The joint probability of", conditionalArg3.translate(None, '|'), "is:", j4
-			return
+			return conditionalProbability(conditionalArgs, engine, BayesNet, False) * jointProbability(args, engine, BayesNet, argsarray)
+	elif typeArgs == "upper":
+		print "upper"
+		if len(argsarray) <= 1:
+			print "Joint Probability Distribution must take at least 2 arguments"
+			sys.exit(2)
+		elif len(argsarray) == 2:
+			conditionalArgs = argsarray[0] + "|" + argsarray[1]
+			marginalArgs = argsarray[1]
+			return conditionalProbability(conditionalArgs, engine, BayesNet, False) * marginalProbability(marginalArgs, engine, BayesNet, False)
 		elif len(argsarray) > 2:
-			return
+			conditionalArgs = argsarray[0] + "|" + argsarray[1]
+			toCalculate = argsarray.pop(0)
+			args = "".join(argsarray)
+			argsarray = parseJointArgs(args)
+			return conditionalProbability(conditionalArgs, engine, BayesNet, False) * jointProbability(args, engine, BayesNet,  argsarray)
 	# return conditionalProbability(args)
 
 #############################################
@@ -285,6 +228,62 @@ def parseJointArgs(args):
 		else:
 			jointArgs.append(string)
 	return jointArgs
+
+def parseConditionalArgs(args):
+	splitPipe = args.split('|')
+	left = splitPipe[0]
+	right = splitPipe[1]
+
+	given = list(right)
+	given = iter(given)
+	conditionalArgs2 = []
+	skip = False
+	for string in given:
+		if string == "~":
+			conditionalArgs2.append("~" + given.next())
+			continue
+		else:
+			conditionalArgs2.append(string)
+	query = left
+	return query, conditionalArgs2
+
+def bruteforcetuple(BayesNet, letter, joint_distrib=False):
+	for node in BayesNet.nodes:
+		if node.id == 0:
+			pollution = node
+		if node.id == 1:
+			smoker = node
+		if node.id == 2:
+			cancer = node
+		if node.id == 3:
+			xray = node
+		if node.id == 4:
+			dyspnoea = node
+
+	if letter == 'p':
+		returntuple = (pollution, True)
+	elif letter == 's':
+		returntuple = (smoker, True)
+	elif letter == 'c':
+		returntuple = (cancer, True)
+	elif letter == 'x':
+		returntuple = (xray, True)
+	elif letter == 'd':
+		returntuple = (dyspnoea, True)
+	elif letter == '~p':
+		returntuple = (pollution, False)
+	elif letter == '~s':
+		returntuple = (smoker, False)
+	elif letter == '~c':
+		returntuple = (cancer, False)
+	elif letter == '~x':
+		returntuple = (xray, False)
+	elif letter == '~d':
+		returntuple = (dyspnoea, False)
+	else:
+		print "Please give a good condition."
+		exit()
+	return returntuple
 
 #############################################
 # checks if the argument was true/false or a 
