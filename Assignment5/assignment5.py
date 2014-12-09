@@ -223,6 +223,13 @@ def get_wikipedia_model():
     hmm.set_hidden_model(init, trans, observ)
     return hmm
 
+def get_robot_model():
+	hmm = HMM(['Red','Green','Yellow', 'Blue'], [])
+
+
+
+	return hmm
+
 def test():
     hmm = get_wikipedia_model()
     print "HMM is:"
@@ -264,7 +271,19 @@ def main():
 		else:
 			assert False, "unhandled option"
 	if option == 2:
-		print "Funcitonality not implemented"
+		print "Functionality not implemented"
+		HMMorder = 2
+	elif option == 1:
+		HMMorder = 1
+
+	if problem == 1:
+		# robot
+	elif problem == 2:
+		# typo correction
+	elif problem == 3:
+		# topic change
+
+
 
 
 
