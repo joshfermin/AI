@@ -236,7 +236,7 @@ def test():
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hp:o", ["help", "problem=", "option="])
+		opts, args = getopt.getopt(sys.argv[1:], "hp:o:", ["help", "problem=", "option="])
 	except getopt.GetoptError as err:
         # print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -247,21 +247,26 @@ def main():
 		if o == "-v":
 			verbose = True 
 		elif o in ("-h", "--help"):
-			print "-g is flag for conditional probability\n-j is flag for joint probability\n-m is flag for marginal probability"
+			print "-p is problem flag 1 - 3\n-o is hmm order flag"
 			sys.exit()
-		elif o in ("-g", "--conditional"):
-			args = a
-			conditionalProbability(args, engine, BayesNet)
-		elif o in ("-j", "--joint"):
-			args = a
-			argsarray = parseJointArgs(args)
-			result = []
-			jointProbabilityDistribution(args, engine, BayesNet, argsarray)
-		elif o in ("-m", "--marginal"):
-			args = a
-			marginalProbability(args, engine, BayesNet)
+		elif o in ("-p", "--problem"):
+			if int(a) > 3 or int(a) < 1:
+				assert False, "Not a valid problem number"
+			else:
+				problem = int(a)
+				# print problem
+		elif o in ("-o", "--option"):
+			if int(a) > 2 or int(a) < 1:
+				assert False, "Not a valid hmm order flag"
+			else:
+				option = int(a)
+				# print option
 		else:
 			assert False, "unhandled option"
+	if option == 2:
+		print "Funcitonality not implemented"
+
+
 
 if __name__ == "__main__":
     main()
