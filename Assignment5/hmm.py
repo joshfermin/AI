@@ -8,7 +8,6 @@ import sys
 
 
 # If PRODUCTION is false, don't do smoothing 
-
 PRODUCTION = True
 
 # Pretty printing for 1D/2D numpy arrays
@@ -573,36 +572,6 @@ observations = %s
             obs = random_from_dist(self.observation[state])
             seq.append( (state, obs) )
         return seq
-
-    
-def get_wikipedia_model():
-    # From the rainy/sunny example on wikipedia (viterbi page)
-    hmm = HMM(['Rainy','Sunny'], ['walk','shop','clean'])
-    init = [0.6, 0.4]
-    trans = [[0.7,0.3], [0.4,0.6]]
-    observ = [[0.1,0.4,0.5], [0.6,0.3,0.1]]
-    hmm.set_hidden_model(init, trans, observ)
-    return hmm
-
-def get_toy_model():
-    hmm = HMM(['h1','h2'], ['A','B'])
-    init = [0.6, 0.4]
-    trans = [[0.7,0.3], [0.4,0.6]]
-    observ = [[0.1,0.9], [0.9,0.1]]
-    hmm.set_hidden_model(init, trans, observ)
-    return hmm
-    
-
-def test():
-    hmm = get_wikipedia_model()
-    print "HMM is:"
-    print hmm
-    
-    seq = [0,1,2]
-    logp = hmm.log_prob_of_sequence(seq)
-    p = exp(logp)
-    print "prob ([walk, shop, clean]): logp= %f  p= %f" % (logp, p)
-    print "most likely states (walk, shop, clean) = %s" % hmm.most_likely_states(seq)
 
 if __name__ == "__main__":
     test()
