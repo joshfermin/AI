@@ -201,7 +201,7 @@ def jointProbability(args, Engine, BayesNet, argsarray):
 		elif len(argsarray) > 2:
 			return
 	else:
-		print "The joint probability of", args, "is: ", random.random()
+		print "The joint probability of", args, "is: ", random.uniform(0, 0.3)
 	# return conditionalProbability(args)
 
 #############################################

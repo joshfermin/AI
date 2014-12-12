@@ -7,10 +7,10 @@ import time
 
 
 # If PRODUCTION is false, don't do smoothing 
-PRODUCTION = True
+# PRODUCTION = True
 
-# Pretty printing for 1D/2D numpy arrays
-MAX_PRINTING_SIZE = 30
+# # Pretty printing for 1D/2D numpy arrays
+# MAX_PRINTING_SIZE = 30
 
 #######################
 # HELPER FUNCTIONS
@@ -75,7 +75,6 @@ observation:
 
     
 def check_model(model):
-    """Check that things add to one as they should"""
     (initial, tran_model, obs_model) = model
     for state in range(len(initial)):
         assert((abs(sum(tran_model[state,:]) - 1)) <= 0.01)
@@ -153,11 +152,7 @@ observations = %s
 
         self.compute_logs()
                      
-    # declare the @ decorator just before the function, invokes print_timing()
     @print_timing  
-
-    # Return the log probability that this hmm assigns to a particular output
-    # sequence
     def log_prob_of_sequence(self, sequence):
         model = (self.initial, self.transition, self.observation) 
         alpha, loglikelyhood = get_alpha(sequence, model)

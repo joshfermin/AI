@@ -1,313 +1,208 @@
+#! /usr/bin/python
+#
+# Assignment 5 - Josh Fermin
+# Artificial Intelligence
+# Collaborated with Josh Fermin, Louis Bouddhou, and Sheefali Tewari.
+#
+
+# imports
 import getopt
 import sys
-import CancerModel as Cancer
-from numpy import *
-sys.path.append('lib/')
-from pbnt.Graph import *
-from pbnt.Distribution import *
-from pbnt.Node import *
-from pbnt.Inference import *
+import time
+from hmm import *
 
-"""
-Josh Fermin
-Artificial Intelligence
-Programming Assignment 4
+#######################
+# DATASETS - PARSING
+def list_index(xs):
+	m = {}
+	for (i, x) in enumerate(xs):
+		m[x] = i
+	return m
 
-Issues:
-	After calculating out the marginal probability by hand,
-	the marginal values returned by the toolbox are incorrect
-	for all variables except for Pollution and Smoker. Because
-	of this, it will skew the answers for joint and conditional
-	probability. 
+class DataSet:
+	def __init__(self, filename, debug=False):
+		self.debug = debug
 
-	Joint probability distribution is not working for more than 3
-	variables. I.e. -jPSC will not work. It is only working for 2 
-	variables.
+		file = open(filename,"r")
 
-How to Use:
-    Flags
-	    -g  conditional probablity
-	    -j  joint probability
-	    -m  marginal probability
-	    -h  help
+		states = set([])
+		outputs = set([])
+		
+		# A sequence is a list of (state, output) tuples
+		sequences = []
+		seq = []
+		switched = False
 
-    Arguments (Distribution, true, false)
-	    P,p,~p  pollution
-	    S,s,~s  Smoker   
-	    C,c,~c  Cancer   
-	    D,d,~d  Dyspnoea 
-	    X,x,~x  X-Ray    
-"""
+		for line in file.readlines():
+			line = line.strip()
+			if len(line) == 0:
+				continue
 
-def main():
-	BayesNet = Cancer.cancer()
-	engine = JunctionTreeEngine(BayesNet)
+			if line ==  "." or line == "..":
+				# end of sequence
+				sequences.append(seq)
+				seq = []
+				if line == "..":
+					if switched:
+						raise Exception("File must have exactly one '..' line")
+					# Switch to test sequences
+					switched = True
+					train_sequences = sequences
+					sequences = []
+
+			else:
+				words = line.split();
+				
+				state = words[0]
+				# Keep track of all the states/outputs
+				states.add(state)
+
+				for output in words[1:]:
+					outputs.add(output)
+					seq.append( (state, output) )
+
+		# By the time we get here, better have seen the train/test
+		# divider
+		if not switched:
+			raise Exception("File must have exactly one '..' line")
+
+		# Don't forget to add the last sequence!
+		if len(seq) > 0:
+			sequences.append(seq)
+					
+		# Ok, the sequences we have now are the test ones
+		test_sequences = sequences
+
+		# Now that we have all the states and outputs, create a numbering
+		self.states = list(states)
+		self.states.sort()
+		self.outputs = list(outputs)
+		self.outputs.sort()
+		state_map = list_index(self.states)
+		output_map = list_index(self.outputs)
+
+		self.train_state = map((lambda seq: map(lambda p: state_map[p[0]], seq)),
+							   train_sequences)
+		self.train_output = map((lambda seq: map (lambda p: output_map[p[1]], seq)), 
+							   train_sequences)
+
+		self.test_state = map((lambda seq: map (lambda p: state_map[p[0]], seq)), 
+							   test_sequences)
+		self.test_output = map((lambda seq: map (lambda p: output_map[p[1]], seq)), 
+							   test_sequences)
+
+		if self.debug:
+			print self
+
+
+@print_timing
+def print_viterbi(hmm, d, debug=False):
+	"""Run the viterbi algorithm for each test sequence in the given dataset"""
+	total_error = 0
+	total_n = 0
+	if debug:
+		print "\nRunning viterbi on each test sequence..."
+	for i in range(len(d.test_output)):
+		if debug:
+			print "Test sequence %d:" % i
+		errors = 0
+		most_likely = [d.states[j] for j in hmm.viterbi(d.test_output[i])]
+		actual = [d.states[j] for j in d.test_state[i]]
+		n = len(most_likely)
+		print "len(most_likely) = %d  len(actual) = %d" % (n, len(actual))
+		for j in range(n):
+			if debug:
+				print "%s     %s      %s" % (
+				actual[j], most_likely[j], d.outputs[d.test_output[i][j]])
+			if actual[j] != most_likely[j]:
+				errors += 1
+			if debug:
+				print "errors: %d / %d = %.3f\n" % (errors, n, errors * 1.0 / n)
+	total_error += errors
+	total_n += n
+
+	err =  total_error * 1.0 / total_n
+	if debug:
+		print "Total mistakes = %d / %d = %f" % (total_error, total_n, err)
+	return err
+
+
+
+def train_hmm_from_data(data_filename, debug=False):
+	if debug:
+		print "\n\nReading dataset %s ..." % data_filename
+	d = DataSet(data_filename)
+	if debug:
+		print "Building an HMM from the full training data..."
+	hmm = HMM(d.states, d.outputs)
+	hmm.learn_from_labeled_data(d.train_state, d.train_output)
+	if debug:
+		print "The model:"
+		print hmm
+	return (hmm, d)
+
+def main(argv=None):
+	HMMorder = 1
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hg:j:m:v", ["help", "conditional=", "joint=", "marginal="])
+		opts, args = getopt.getopt(sys.argv[1:], "hp:o:f:", ["help", "problem=", "option=", "file="])
 	except getopt.GetoptError as err:
-        # print help information and exit:
+		# print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
 		sys.exit(2)
 	output = None
 	verbose = False
+	filename = None
 	for o, a in opts:
-		if o == "-v":
-			verbose = True 
-		elif o in ("-h", "--help"):
-			print "-g is flag for conditional probability\n-j is flag for joint probability\n-m is flag for marginal probability"
+		if o in ("-h", "--help"):
+			print "-p is problem flag 1 - 3\n-o is hmm order flag\n-f allows you to specify your own dataset.\n DONT USE -p and -f in conjunction!!!"
 			sys.exit()
-		elif o in ("-g", "--conditional"):
-			args = a
-			conditionalProbability(args, engine, BayesNet)
-		elif o in ("-j", "--joint"):
-			args = a
-			argsarray = parseJointArgs(args)
-			result = []
-			jointProbabilityDistribution(args, engine, BayesNet, argsarray)
-		elif o in ("-m", "--marginal"):
-			args = a
-			marginalProbability(args, engine, BayesNet)
+		elif o in ("-o", "--option"):
+			option = int(a)
+			if option > 2 or option < 1:
+				assert False, "Not a valid hmm order flag"
+				
+				
+		elif o in ("-p", "--problem"):
+			if int(a) > 3 or int(a) < 1:
+				assert False, "Not a valid problem number"
+			else:
+				problem = int(a)
+				
+					# topic change
+		elif o in ("-f", "--file"):
+			filename = a
+			print filename
+			hmm, d = train_hmm_from_data(filename, True)
+		  	err_full = print_viterbi(hmm, d , True)
+			# print filename
 		else:
 			assert False, "unhandled option"
-
-#############################################
-# Calculates conditional probability for one var
-# args is argument passed in, Engine is the 
-# junctionTreeEngine from the toolbox, and Bayes
-# Net is the the net.
-def conditionalProbability(args, Engine, BayesNet, debug=True):
-	a = args
-	conditionalArray = []
-	conditionalNodes = []
-	conditionalType = []
-	conditionalBool = []
-
-	# parsing the args i.e. splitting at the "|" pipe.
-	conditionalArray = parseConditionalArgs2(a)
-	arglookup = parseConditionalArgs1(a)
-	arglookup2 = findArgValue(arglookup)
-
-	argValue = checkArgs(arglookup)
-	if argValue == "lower":
-		argValue = True
-	if argValue == "squiggle":
-		argValue = False
-
-	# if checkArgs()
-	# print conditionalArray
-
-	# for c|p~s, gives c node
-	for node in BayesNet.nodes:
-		if node.id == 0 and arglookup2 == 'p':
-			toCalculate = node
-		if node.id == 1 and arglookup2 == 's':
-			toCalculate = node
-		if node.id == 2 and arglookup2 == 'c':
-			toCalculate = node
-		if node.id == 3 and arglookup2 == 'x':
-			toCalculate = node
-		if node.id == 4 and arglookup2 == 'd':
-			toCalculate = node
-
-	# for c|p~s, appends p and s nodes to conditionalNode array
-	for node in BayesNet.nodes:
-		for arg in conditionalArray:
-			conditionalType.append(checkArgs(arg))
-			arg = findArgValue(arg)
-			if node.id == 0 and arg == 'p':
-				conditionalNodes.append(node)
-			if node.id == 1 and arg == 's':
-				conditionalNodes.append(node)
-			if node.id == 2 and arg == 'c':
-				conditionalNodes.append(node)
-			if node.id == 3 and arg == 'x':
-				conditionalNodes.append(node)
-			if node.id == 4 and arg == 'd':
-				conditionalNodes.append(node)
-
-	# converts p and s nodes to booleans i.e. p is true, ~s is false
-	for arg in conditionalType:
-		if arg == "lower":
-			conditionalBool.append(True)
-		if arg == "squiggle":
-			conditionalBool.append(False)
-
-	# gives evidence to the engine for the given nodes.
-	for arr_index, node in enumerate(conditionalNodes):
-		# print conditionalBool[arr_index]
-		# print node.name
-		Engine.evidence[node] = conditionalBool[arr_index]
-
-	Q = Engine.marginal(toCalculate)[0]
-
-
-	index = Q.generate_index([argValue], range(Q.nDims))
-	conditionalProbability = Q[index]
-
-	if debug: print "The condtional probability of", arglookup, "given",  ', '.join(conditionalArray), "is: ", conditionalProbability
-	return conditionalProbability
-
-#############################################
-# Calculates joint probability by calling the 
-# recursive jointProbability function
-def jointProbabilityDistribution(args, Engine, BayesNet, argsarray):
-	result = jointProbability(args, Engine, BayesNet, argsarray)
-	if checkArgs(args) == "lower":
-		print "The joint probability of", args, "is:", result
-
-#############################################
-# Calculates joint probability by using a recursive
-# method. (this only works for the lowercase) I.e.  
-# P(Z=z, X=x, Y=y) = jointProbability(Z=z, jointProbability(X=x,Y=y)))
-def jointProbability(args, Engine, BayesNet, argsarray):
-	typeArgs = checkArgs(args)
-	if len(argsarray) <= 1:
-			print "Joint Probability Distribution must take at least 2 arguments"
-			sys.exit(2)	
-	if typeArgs == "lower":
-		if len(argsarray) == 2:
-			conditionalArgs = argsarray[0] + "|" + argsarray[1]
-			marginalArgs = argsarray[1]
-			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * marginalProbability(marginalArgs, Engine, BayesNet, False)
-		elif len(argsarray) > 2:
-			conditionalArgs = argsarray[0] + "|" + argsarray[1]
-			toCalculate = argsarray.pop(0)
-			args = "".join(argsarray)
-			argsarray = parseJointArgs(args)
-			return conditionalProbability(conditionalArgs, Engine, BayesNet, False) * jointProbability(args, Engine, BayesNet, argsarray)
-	if typeArgs == "upper":
-		if len(argsarray) == 2:
-			conditional = []
-			marginal0 = marginalProbability(argsarray[0], Engine, BayesNet, False)
-			marginal1 = marginalProbability(argsarray[1], Engine, BayesNet, False)
-			marginal0 = map(str, marginal0)
-			marginal1 = map(str, marginal1)
-
-			conditionalArg0 = args[0].lower() + "|" + args[1].lower()
-			conditionalArg1 = "~" + args[0].lower() + "|" + args[1].lower()
-			conditionalArg2 = args[0].lower() + "|" + "~" + args[1].lower()
-			conditionalArg3 =  "~" + args[0].lower() + "|" + "~" + args[1].lower()
-
-			j1 = conditionalProbability(conditionalArg0, Engine, BayesNet, False) * double(marginal0[0])
-			j2 = conditionalProbability(conditionalArg1, Engine, BayesNet, False) * double(marginal0[0])
-			j3 = conditionalProbability(conditionalArg2, Engine, BayesNet, False) * double(marginal0[1])
-			j4 = conditionalProbability(conditionalArg3, Engine, BayesNet, False) * double(marginal0[1])
-
-			print "The joint probability of", conditionalArg0.translate(None, '|'), "is:", j1
-			print "The joint probability of", conditionalArg1.translate(None, '|'), "is:", j2
-			print "The joint probability of", conditionalArg2.translate(None, '|'), "is:", j3
-			print "The joint probability of", conditionalArg3.translate(None, '|'), "is:", j4
-			return
-		elif len(argsarray) > 2:
-			return
-	# return conditionalProbability(args)
-
-#############################################
-# Calculates marginal probability for one var
-# args is argument passed in, Engine is the 
-# junctionTreeEngine from the toolbox, and Bayes
-# Net is the the net.
-def marginalProbability(args, Engine, BayesNet, debug=True):
-	arglookup = findArgValue(args)
-	if len(parseJointArgs(args)) > 1:
-		print "Marginal Probability Distribution can only take one argument"
-		sys.exit(2)
-	for node in BayesNet.nodes:
-		if node.id == 0 and arglookup == 'p':
-			toCalculate = node
-		if node.id == 1 and arglookup == 's':
-			toCalculate = node
-		if node.id == 2 and arglookup == 'c':
-			toCalculate = node
-		if node.id == 3 and arglookup == 'x':
-			toCalculate = node
-		if node.id == 4 and arglookup == 'd':
-			toCalculate = node
-	Q = Engine.marginal(toCalculate)[0]
-	argtype = checkArgs(args)
-	if argtype == "lower":
-		index = Q.generate_index([True], range(Q.nDims))
-		if debug: print "The marginal probability of " + args + "=true: ", Q[index]
-		return Q[index]
-	elif argtype == "squiggle":
-		index = Q.generate_index([False], range(Q.nDims))
-		if debug: print "The marginal probability of " + args + "=false: ", Q[index]
-		return Q[index]
-	elif argtype == "upper":
-		indexArray = []
-		indexTrue = Q.generate_index([True], range(Q.nDims))
-		indexArray.append(Q[indexTrue])
-		if debug: print "The marginal probability of " + args + "=true: ", Q[indexTrue]
-		indexFalse = Q.generate_index([False], range(Q.nDims))
-		indexArray.append(Q[indexFalse])
-		if debug: print "The marginal probability of " + args + "=false: ", Q[indexFalse]
-		return indexArray
-
+	if option == 2:
+		print "Extra Credit - Functionality not implemented"
+		sys.exit()
+	if filename == None:
+		if problem == 1:
+		  	hmm, d = train_hmm_from_data("Assignment5DataSets/robot_no_momemtum.data", True)
+		  	err_full = print_viterbi(hmm, d , True)
+		  	print "Finished robot_no_momemtum.data\nSleeping for 3 seconds...\nGetting ready to run robot_with_momentum.data"
+		  	time.sleep(3)
+		  	hmm, d = train_hmm_from_data("Assignment5DataSets/robot_with_momemtum.data", True)
+		  	err_full = print_viterbi(hmm, d , True)
+	  		print "Finished robot_with_momemtum.data"
+		elif problem == 2:
+			hmm, d = train_hmm_from_data("Assignment5DataSets/typos10.data", True)
+		  	err_full = print_viterbi(hmm, d , True)
+		  	print "Finished typos10.data\nSleeping for 3 seconds...\nGetting ready to run typos20.data"
+		  	time.sleep(3)
+		  	hmm, d = train_hmm_from_data("Assignment5DataSets/typos20.data", True)
+		  	err_full = print_viterbi(hmm, d , True)
+		  	print "Finished typos20.data"
+		elif problem == 3:
+			print "WARNING: THIS WILL PRINT OUT A LARGE CONDITIONAL PROBABILITY TABLE"
+			time.sleep(3)
+			hmm, d = train_hmm_from_data("Assignment5DataSets/topics.data", True)
+		  	err_full = print_viterbi(hmm, d , True)
 	
-"""
-Functions for parsing the command line arguments:
-"""
-
-#############################################
-# given part i.e. p|c~x will return ['c', '~x']
-def parseConditionalArgs2(args):
-	given = args.split("|", 1)[1]
-	given = list(given)
-	given = iter(given)
-	conditionalArgs2 = []
-	skip = False
-	for string in given:
-		if string == "~":
-			conditionalArgs2.append("~" + given.next())
-			continue
-		else:
-			conditionalArgs2.append(string)
-	return conditionalArgs2
-
-#############################################
-# toCalculate part i.e. p|c~x will return string p
-def parseConditionalArgs1(args):
-	given = args.split("|", 1)[0]
-	return given
-
-#############################################
-# given a string of args i.e. "PCS" will return
-# an array i.e. ['P', 'C', 'S']
-def parseJointArgs(args):
-	given = list(args)
-	given = iter(given)
-	jointArgs = []
-	skip = False
-	for string in given:
-		if string == "~":
-			jointArgs.append("~" + given.next())
-			continue
-		else:
-			jointArgs.append(string)
-	return jointArgs
-
-#############################################
-# checks if the argument was true/false or a 
-# probability distribution
-def checkArgs(args):
-	if args.islower():
-		if "~" in args:
-			return "squiggle"
-		else:
-			return "lower"
-	elif args.isupper():
-		return "upper"
-
-#############################################
-# returns the letter of the arg in lowercase
-def findArgValue(args):
-	if args.islower():
-		if "~" in args:
-			return args.translate(None, '~')
-		else:
-			return args
-	elif args.isupper():
-		return args.lower()
-
 if __name__ == "__main__":
 	main()
+	# main()
